@@ -74,7 +74,7 @@ with col2:
     if inout_type == "입고":
         manager = st.text_input("입고 담당자", placeholder="예: 홍길동")
     else:
-        manager = st.text_input("출고 담당자", placeholder="예: 이철수")
+        manager = st.text_input("출고 담당자", placeholder="예: 홍길동")
 
     remark = st.text_input("비고")
 
