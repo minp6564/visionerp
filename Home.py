@@ -10,14 +10,9 @@ today = datetime.date.today()
 # 헤더 및 소개
 # -----------------------------
 st.set_page_config(page_title="🏭 ERP 홈 대시보드", layout="wide")
-st.title("🏭 소규모 제조업 ERP 시스템")
+st.title("visionerp")
 st.markdown("""
 이 시스템은 소규모 제조기업을 위한 **경량 ERP 솔루션**입니다.
-
-좌측 메뉴를 통해 다음 기능을 사용할 수 있습니다:
-- 📦 제품 등록
-- 📥 재고 입출고 등록
-- 앞으로 **생산 계획, 수주/납품, 회계 기능**도 연동될 예정입니다.
 
 ---
 
