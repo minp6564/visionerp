@@ -75,11 +75,14 @@ else:
 # 채팅창 placeholder
 chat_container = st.empty()
 
+# 내가 보낸 것만 보기
+show_only_mine = st.checkbox("👀 내가 보낸 메시지만 보기", value=False)
+
 def render_chat():
     with chat_container:
         st.subheader(chat_title)
         for i, chat in enumerate(st.session_state.chat_history):
-            if chat_filter(chat):
+            if chat_filter(chat) and (not show_only_mine or chat["sender"] == current_user):
                 with st.chat_message("user" if chat["sender"] == current_user else "assistant"):
                     if chat["message"]:
                         st.markdown(f"**{chat['sender']}**: {chat['message']}")
@@ -135,7 +138,7 @@ if st.button("전송", key="send_message"):
         with open(SAVE_FILE, "wb") as f:
             pickle.dump(st.session_state.chat_history, f)
 
-        # 메시지를 직접 초기화하려고 하지 않음 → 오류 방지
-        render_chat()  # 채팅창 다시 그림
+        # 🔄 전체 앱 새로 실행해서 반영
+        st.experimental_rerun()
     else:
         st.warning("메시지나 파일을 입력해주세요.")
