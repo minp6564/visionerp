@@ -103,7 +103,7 @@ st.divider()
 # 메시지 입력 및 파일 업로드
 col1, col2 = st.columns([3, 1])
 with col1:
-    message = st.text_input("메시지를 입력하세요", value="", key="message_input")
+    message = st.text_input("메시지를 입력하세요", key="message_input")
 with col2:
     uploaded_file = st.file_uploader("파일", key="file_input", label_visibility="collapsed")
 
@@ -135,7 +135,7 @@ if st.button("전송", key="send_message"):
         with open(SAVE_FILE, "wb") as f:
             pickle.dump(st.session_state.chat_history, f)
 
-        st.session_state["message_input"] = ""  # 입력창 초기화
-        render_chat()  # 채팅창 다시 그리기
+        # 메시지를 직접 초기화하려고 하지 않음 → 오류 방지
+        render_chat()  # 채팅창 다시 그림
     else:
         st.warning("메시지나 파일을 입력해주세요.")
