@@ -12,7 +12,7 @@ st.title("📦 재고 입출고 등록")
 # -----------------------------
 def initialize_firebase():
     if "firebase_app" not in st.session_state:
-        cred = credentials.Certificate("data/firebase_key.json")
+        cred = credentials.Certificate("data/clerix-26d68-firebase-adminsdk-fbsvc-4408d0adda.json")
         firebase_app = firebase_admin.initialize_app(cred)
         db = firestore.client()
         st.session_state.firebase_app = firebase_app
