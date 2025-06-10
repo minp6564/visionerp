@@ -2,6 +2,42 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 
+# 스타일링을 위한 HTML/CSS 코드 추가
+st.markdown("""
+    <style>
+        .title {
+            color: #2F4F4F;
+            font-size: 40px;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .sub-title {
+            color: #5F6368;
+            font-size: 30px;
+            text-align: center;
+        }
+        .section-header {
+            color: #00796B;
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            font-size: 14px;
+            color: #00796B;
+        }
+        .card {
+            background-color: #E0F2F1;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
 # 데이터 저장을 위한 변수 설정 (SQLite 대신 메모리 사용)
 if 'transactions' not in st.session_state:
     st.session_state.transactions = []  # 거래 내역을 저장
@@ -9,17 +45,13 @@ if 'transactions' not in st.session_state:
 
 # 거래 추가 함수 (입금, 출금으로 단순화)
 def add_transaction(date, account, description, amount_in, amount_out, transaction_type):
-    """
-    거래 추가
-    - transaction_type: '수익' 또는 '비용'으로 거래의 유형을 구분
-    """
     transaction = {
         "날짜": date,
         "항목": account,
         "설명": description,
         "입금": amount_in,
         "출금": amount_out,
-        "유형": transaction_type  # '수익' 또는 '비용'
+        "유형": transaction_type
     }
     st.session_state.transactions.append(transaction)
 
@@ -49,10 +81,12 @@ def income_statement():
 
 # Streamlit UI 구성
 def main():
-    st.title("간단한 회계 시스템")
+    st.markdown('<div class="title">간단한 회계 시스템</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sub-title">거래 내역을 추가하고 계좌 현황과 수익을 확인하세요!</div>', unsafe_allow_html=True)
 
     # 거래 입력 섹션
     with st.expander("거래 입력하기"):
+        st.markdown('<div class="section-header">거래 입력</div>', unsafe_allow_html=True)
         date = st.date_input("날짜", value=datetime.today())
         account = st.text_input("항목 (예: 현금, 매출 등)")
         description = st.text_area("설명 (거래에 대한 간단한 설명)")
@@ -68,7 +102,7 @@ def main():
 
     # 추가된 거래 목록 표시
     if len(st.session_state.transactions) > 0:
-        st.write("### 추가된 거래 목록")
+        st.markdown('<div class="section-header">추가된 거래 목록</div>', unsafe_allow_html=True)
         transactions_df = pd.DataFrame(st.session_state.transactions)
         st.dataframe(transactions_df)
 
@@ -79,6 +113,9 @@ def main():
     # 수익과 비용 조회
     if st.button("수익과 비용 조회"):
         income_statement()
+
+    # 페이지 하단에 푸터 추가
+    st.markdown('<div class="footer">간단한 회계 시스템을 사용해 주셔서 감사합니다!</div>', unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
