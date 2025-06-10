@@ -2,32 +2,53 @@ import streamlit as st
 import datetime
 import os
 
-# 📁 파일 저장 폴더 만들기
+# 📁 파일 저장 폴더
 UPLOAD_DIR = "data/uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# 👤 예시 사용자 목록 (연습용)
-users = ["김대리", "박과장", "이사원"]
+# 👥 사용자 목록
+users = [
+    {"name": "김대리", "department": "물류팀"},
+    {"name": "이사원", "department": "물류팀"},
+    {"name": "박과장", "department": "회계팀"},
+    {"name": "정부장", "department": "영업팀"},
+]
 
-# 📌 세션 상태 초기화
+# 부서 목록 추출
+departments = sorted(list(set(u["department"] for u in users)))
+
+# 🧠 세션 상태 초기화
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
-# 🏷️ 타이틀
-st.title("💬 사내 채팅 (1:1 + 파일 공유)")
+# 🧑 내 사용자 이름 선택
+current_user = st.selectbox("내 이름을 선택하세요:", [u["name"] for u in users])
+user_info = next(u for u in users if u["name"] == current_user)
 
-# 👥 현재 사용자 (로그인 흉내)
-current_user = st.selectbox("내 이름을 선택하세요:", users, index=0)
+# 💬 모드 선택
+chat_mode = st.radio("채팅 모드를 선택하세요:", ["1:1 채팅", "부서 단체방"])
 
-# 🎯 대화 상대 선택
-receiver_candidates = [u for u in users if u != current_user]
-receiver = st.selectbox("채팅할 상대를 선택하세요:", receiver_candidates)
+# 📌 채팅 대상 정하기
+if chat_mode == "1:1 채팅":
+    receiver_candidates = [u["name"] for u in users if u["name"] != current_user]
+    receiver = st.selectbox("대화할 상대를 선택하세요:", receiver_candidates)
+    chat_title = f"📨 {receiver} 님과의 1:1 대화"
+    chat_filter = lambda chat: (
+        chat.get("mode") == "private"
+        and {chat["sender"], chat["receiver"]} == {current_user, receiver}
+    )
+else:
+    dept = user_info["department"]
+    chat_title = f"📢 [{dept}] 부서 단체방"
+    chat_filter = lambda chat: (
+        chat.get("mode") == "group" and chat["room"] == dept
+    )
 
-st.subheader(f"📨 {receiver} 님과의 대화")
+st.subheader(chat_title)
 
-# 💬 이전 채팅 내역 보여주기
+# 📜 채팅 내역 보여주기
 for chat in st.session_state.chat_history:
-    if {chat["sender"], chat["receiver"]} == {current_user, receiver}:
+    if chat_filter(chat):
         with st.chat_message("user" if chat["sender"] == current_user else "assistant"):
             if chat["message"]:
                 st.markdown(f"**{chat['sender']}**: {chat['message']}")
@@ -54,7 +75,6 @@ with col2:
 if st.button("전송"):
     saved_file_path = None
 
-    # 파일 저장
     if uploaded_file:
         file_name = uploaded_file.name
         saved_file_path = os.path.join(UPLOAD_DIR, file_name)
@@ -62,13 +82,25 @@ if st.button("전송"):
             f.write(uploaded_file.read())
 
     if message.strip() or saved_file_path:
-        st.session_state.chat_history.append({
+        new_chat = {
             "sender": current_user,
-            "receiver": receiver,
             "message": message if message.strip() else None,
             "file_path": saved_file_path,
-            "timestamp": datetime.datetime.now()
-        })
+            "timestamp": datetime.datetime.now(),
+        }
+
+        if chat_mode == "1:1 채팅":
+            new_chat.update({
+                "mode": "private",
+                "receiver": receiver
+            })
+        else:
+            new_chat.update({
+                "mode": "group",
+                "room": user_info["department"]
+            })
+
+        st.session_state.chat_history.append(new_chat)
         st.experimental_rerun()
     else:
         st.warning("메시지나 파일 중 하나는 입력해 주세요.")
