@@ -1,5 +1,4 @@
 import streamlit as st
-
 st.title("💬 사내 채팅")
 import datetime
 import os
@@ -50,9 +49,9 @@ if chat_mode == "1:1 채팅":
 else:
     st.markdown("---")
     with st.expander("➕ 새로운 단체방 만들기"):
-        new_room_name = st.text_input("채팅방 이름")
-        new_room_members = st.multiselect("참가자 선택", [u["name"] for u in users if u["name"] != current_user])
-        if st.button("채팅방 생성"):
+        new_room_name = st.text_input("채팅방 이름", key="new_room_name")
+        new_room_members = st.multiselect("참가자 선택", [u["name"] for u in users if u["name"] != current_user], key="new_room_members")
+        if st.button("채팅방 생성", key="create_room"):
             if new_room_name.strip() and new_room_members:
                 st.session_state.chat_rooms.append({
                     "name": new_room_name.strip(),
@@ -73,7 +72,7 @@ else:
         st.info("➕ 먼저 채팅방을 만들고 입장하세요.")
         st.stop()
 
-# 🪄 채팅창 placeholder 만들기
+# 채팅창 placeholder
 chat_container = st.empty()
 
 def render_chat():
@@ -84,33 +83,32 @@ def render_chat():
                 with st.chat_message("user" if chat["sender"] == current_user else "assistant"):
                     if chat["message"]:
                         st.markdown(f"**{chat['sender']}**: {chat['message']}")
-
                     if chat["file_path"]:
                         file_name = os.path.basename(chat["file_path"])
-                        with open(chat["file_path"], "rb") as f:
+                        if os.path.exists(chat["file_path"]):
+                            with open(chat["file_path"], "rb") as f:
                                 st.download_button(
-                                label=f"📎 {file_name} 다운로드",
-                                data=f,
-                                file_name=file_name,
-                                key=f"download_{i}_{chat['sender']}_{file_name}_{chat['timestamp'].timestamp()}"
-                        )
-
+                                    label=f"📎 {file_name} 다운로드",
+                                    data=f,
+                                    file_name=file_name,
+                                    key=f"download_{i}_{chat['sender']}_{file_name}_{chat['timestamp'].timestamp()}"
+                                )
                     st.caption(chat["timestamp"].strftime("%Y-%m-%d %H:%M:%S"))
 
-# 초기 채팅 표시
+# 채팅 초기 출력
 render_chat()
 
 st.divider()
 
-# 입력창 + 업로더
+# 메시지 입력 및 파일 업로드
 col1, col2 = st.columns([3, 1])
 with col1:
-    message = st.text_input("메시지를 입력하세요", key="message_input")
+    message = st.text_input("메시지를 입력하세요", value="", key="message_input")
 with col2:
     uploaded_file = st.file_uploader("파일", key="file_input", label_visibility="collapsed")
 
 # 전송 버튼
-if st.button("전송"):
+if st.button("전송", key="send_message"):
     saved_file_path = None
 
     if uploaded_file:
@@ -137,7 +135,7 @@ if st.button("전송"):
         with open(SAVE_FILE, "wb") as f:
             pickle.dump(st.session_state.chat_history, f)
 
-        message = ""  # 입력창 초기화
-        render_chat()  # 채팅창만 다시 그림
+        st.session_state["message_input"] = ""  # 입력창 초기화
+        render_chat()  # 채팅창 다시 그리기
     else:
         st.warning("메시지나 파일을 입력해주세요.")
