@@ -2,18 +2,18 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 
-journal_entries = []  
+transactions = []  
 accounts = {}  
 
-def add_entry(date, account, description, amount_in, amount_out):
-    entry = {
+def add_transaction(date, account, description, amount_in, amount_out):
+    transaction = {
         "날짜": date,
         "항목": account,
         "설명": description,
         "입금": amount_in,
         "출금": amount_out
     }
-    journal_entries.append(entry)
+    transactions.append(transaction)
 
     if account not in accounts:
         accounts[account] = 0
@@ -26,10 +26,10 @@ def balance_sheet():
     )
     st.write("### 계좌 현황")
     st.dataframe(balance_data)
-
+    
 def income_statement():
-    total_in = sum(entry['입금'] for entry in journal_entries)
-    total_out = sum(entry['출금'] for entry in journal_entries)
+    total_in = sum(entry['입금'] for entry in transactions)
+    total_out = sum(entry['출금'] for entry in transactions)
     net_income = total_in - total_out
     st.write("### 수익과 비용")
     st.write(f"총 입금: {total_in}")
@@ -38,14 +38,14 @@ def income_statement():
 
 def account_balance(account_name):
     if account_name in accounts:
-        st.write(f"계정: {account_name} - 잔액: {accounts[account_name]}")
+        st.write(f"항목: {account_name} - 잔액: {accounts[account_name]}")
     else:
-        st.write("계정을 찾을 수 없습니다.")
+        st.write("항목을 찾을 수 없습니다.")
 
 def main():
-    st.title("회계 시스템🧾")
+    st.title("간단한 회계 시스템")
 
-    with st.expander("거래 입력하기🧮"):
+    with st.expander("거래 입력하기"):
         date = st.date_input("날짜", value=datetime.today())
         account = st.text_input("항목 (예: 현금, 매출 등)")
         description = st.text_area("설명 (거래에 대한 간단한 설명)")
@@ -53,18 +53,18 @@ def main():
         amount_out = st.number_input("출금액", min_value=0.0, value=0.0)  # 출금
         
         if st.button("거래 추가"):
-            add_entry(date, account, description, amount_in, amount_out)
+            add_transaction(date, account, description, amount_in, amount_out)
             st.success("거래가 성공적으로 추가되었습니다!")
 
-    if len(journal_entries) > 0:
+    if len(transactions) > 0:
         st.write("### 추가된 거래 목록")
-        journal_df = pd.DataFrame(journal_entries)
-        st.dataframe(journal_df)
+        transactions_df = pd.DataFrame(transactions)
+        st.dataframe(transactions_df)
 
-    if st.button("계좌 현황 조회💰"):
+    if st.button("계좌 현황 조회"):
         balance_sheet()
 
-    if st.button("수익과 비용 조회📊"):
+    if st.button("수익과 비용 조회"):
         income_statement()
 
 if __name__ == "__main__":
