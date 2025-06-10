@@ -2,7 +2,3 @@ openai
 streamlit
 plotly
 pandas
-os
-datetime
-pickle
-plotly.express
