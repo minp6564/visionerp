@@ -53,9 +53,4 @@ def main():
         amount_out = st.number_input("출금액", min_value=0.0, value=0.0)
         
         if st.button("거래 추가"):
-            add_transaction(date, account, description, amount_in, amount_out)
-            st.success("거래가 성공적으로 추가되었습니다!")
-
-    if len(transactions) > 0:
-        st.write("### 추가된 거래 목록")
-        transactions_df = pd.DataFrame(transactions)
+            add_transaction(date, account, description_
