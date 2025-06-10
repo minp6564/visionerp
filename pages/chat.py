@@ -166,6 +166,12 @@ if st.button("전송", key="send_button"):
         st.warning("메시지나 파일을 입력해주세요.")
 
 # 🔁 rerun 안전하게 처리
-if st.session_state.get("trigger_rerun"):
-    st.session_state.trigger_rerun = False
-    st.experimental_rerun()
+# rerun은 script 맨 아래에서 처리
+def safe_rerun():
+    # rerun은 버튼이 아닌 메인 흐름에서만 실행
+    if st.session_state.get("trigger_rerun", False):
+        st.session_state.trigger_rerun = False
+        st.experimental_rerun()
+
+safe_rerun()
+
