@@ -2,13 +2,14 @@ import streamlit as st
 import datetime
 import os
 import pickle
+import uuid
 
-# 📁 파일 경로 설정
+# 📁 파일 저장 경로
 UPLOAD_DIR = "data/uploads"
 SAVE_FILE = "data/chat_history.pkl"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# 👤 사용자 목록
+# 사용자 목록
 users = [
     {"name": "김대리", "department": "물류팀"},
     {"name": "이사원", "department": "물류팀"},
@@ -16,7 +17,7 @@ users = [
     {"name": "정부장", "department": "영업팀"},
 ]
 
-# 🗂 채팅 기록 복원
+# 채팅 기록 복원
 if "chat_history" not in st.session_state:
     if os.path.exists(SAVE_FILE):
         with open(SAVE_FILE, "rb") as f:
@@ -29,7 +30,7 @@ if "chat_rooms" not in st.session_state:
 
 st.title("💬 사내 채팅")
 
-# ✅ 사용자 선택 상태 유지
+# 사용자 선택
 if "current_user" not in st.session_state:
     st.session_state.current_user = users[0]["name"]
 st.session_state.current_user = st.selectbox(
@@ -40,23 +41,22 @@ st.session_state.current_user = st.selectbox(
 )
 current_user = st.session_state.current_user
 
-# ✅ 모드 선택 상태 유지
+# 채팅 모드
 if "chat_mode" not in st.session_state:
     st.session_state.chat_mode = "1:1 채팅"
 st.session_state.chat_mode = st.radio(
-    "채팅 모드:", ["1:1 채팅", "단체방 (자신 생성)"],
+    "채팅 모드", ["1:1 채팅", "단체방 (자신 생성)"],
     index=["1:1 채팅", "단체방 (자신 생성)"].index(st.session_state.chat_mode)
 )
 chat_mode = st.session_state.chat_mode
 
-# ✅ 상대방/단체방 선택
+# 상대/단체방 설정
 if chat_mode == "1:1 채팅":
     receiver_candidates = [u["name"] for u in users if u["name"] != current_user]
     if "receiver" not in st.session_state:
         st.session_state.receiver = receiver_candidates[0]
     st.session_state.receiver = st.selectbox(
-        "채팅할 상대를 선택하세요:",
-        receiver_candidates,
+        "채팅할 상대:", receiver_candidates,
         index=receiver_candidates.index(st.session_state.receiver),
         key="receiver_select"
     )
@@ -65,9 +65,8 @@ if chat_mode == "1:1 채팅":
     chat_filter = lambda chat: (
         chat.get("mode") == "private" and {chat["sender"], chat["receiver"]} == {current_user, receiver}
     )
-
 else:
-    with st.expander("➕ 새로운 단체방 만들기"):
+    with st.expander("➕ 단체방 만들기"):
         new_room_name = st.text_input("채팅방 이름", key="room_name_input")
         new_room_members = st.multiselect("참가자 선택", [u["name"] for u in users if u["name"] != current_user], key="room_members_input")
         if st.button("채팅방 생성", key="create_room_button"):
@@ -78,11 +77,11 @@ else:
                 })
                 st.success(f"'{new_room_name}' 채팅방이 생성되었습니다.")
             else:
-                st.warning("방 이름과 참가자를 모두 입력해주세요.")
+                st.warning("방 이름과 참가자를 모두 입력하세요.")
 
     my_rooms = [r for r in st.session_state.chat_rooms if current_user in r["members"]]
     if not my_rooms:
-        st.info("➕ 먼저 채팅방을 만들고 입장하세요.")
+        st.info("➕ 먼저 단체방을 만들고 입장하세요.")
         st.stop()
 
     if "selected_room" not in st.session_state:
@@ -98,7 +97,7 @@ else:
         chat.get("mode") == "custom_group" and chat["room"] == selected_room
     )
 
-# 💬 채팅 출력
+# 채팅 표시 함수
 chat_container = st.empty()
 
 def render_chat():
@@ -109,29 +108,28 @@ def render_chat():
                 with st.chat_message("user" if chat["sender"] == current_user else "assistant"):
                     if chat["message"]:
                         st.markdown(f"**{chat['sender']}**: {chat['message']}")
-                    if chat["file_path"]:
+                    if chat["file_path"] and os.path.exists(chat["file_path"]):
                         file_name = os.path.basename(chat["file_path"])
-                        if os.path.exists(chat["file_path"]):
-                            with open(chat["file_path"], "rb") as f:
-                                st.download_button(
-                                    label=f"📎 {file_name} 다운로드",
-                                    data=f,
-                                    file_name=file_name,
-                                    key=f"download_{i}_{chat['sender']}_{chat['timestamp'].timestamp()}"
-                                )
+                        with open(chat["file_path"], "rb") as f:
+                            st.download_button(
+                                label=f"📎 {file_name} 다운로드",
+                                data=f,
+                                file_name=file_name,
+                                key=f"download_{uuid.uuid4()}"
+                            )
                     st.caption(chat["timestamp"].strftime("%Y-%m-%d %H:%M:%S"))
 
+# 초기 채팅 렌더링
 render_chat()
 st.divider()
 
-# 📥 입력창
+# 입력 및 전송
 col1, col2 = st.columns([3, 1])
 with col1:
     message = st.text_input("메시지를 입력하세요", key="message_input")
 with col2:
     uploaded_file = st.file_uploader("파일", key="file_input", label_visibility="collapsed")
 
-# ✅ 전송 버튼 처리
 if st.button("전송", key="send_button"):
     saved_file_path = None
 
@@ -148,7 +146,6 @@ if st.button("전송", key="send_button"):
             "file_path": saved_file_path,
             "timestamp": datetime.datetime.now(),
         }
-
         if chat_mode == "1:1 채팅":
             new_chat.update({"mode": "private", "receiver": receiver})
         else:
@@ -159,20 +156,7 @@ if st.button("전송", key="send_button"):
         with open(SAVE_FILE, "wb") as f:
             pickle.dump(st.session_state.chat_history, f)
 
-        # ❌ rerun 없이 채팅창 다시 그리기
-        render_chat()
-        # ✅ 입력창 초기화
-        st.session_state.message_input = ""
+        st.session_state.message_input = ""  # 입력창 초기화
+        render_chat()  # 새로 그리기
     else:
         st.warning("메시지나 파일을 입력해주세요.")
-
-# 🔁 rerun 안전하게 처리
-# rerun은 script 맨 아래에서 처리
-def safe_rerun():
-    # rerun은 버튼이 아닌 메인 흐름에서만 실행
-    if st.session_state.get("trigger_rerun", False):
-        st.session_state.trigger_rerun = False
-        st.experimental_rerun()
-
-safe_rerun()
-
