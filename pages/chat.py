@@ -1,9 +1,11 @@
 import streamlit as st
 import datetime
 import os
+import pickle
 
 # 파일 저장 경로
 UPLOAD_DIR = "data/uploads"
+SAVE_FILE = "data/chat_history.pkl"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 # 사용자 목록
@@ -14,8 +16,11 @@ users = [
     {"name": "정부장", "department": "영업팀"},
 ]
 
-# 배포에 따른 특정 값 설정
-if "chat_history" not in st.session_state:
+# 채팅 기록 복원 (pickle 열기)
+if os.path.exists(SAVE_FILE):
+    with open(SAVE_FILE, "rb") as f:
+        st.session_state.chat_history = pickle.load(f)
+else:
     st.session_state.chat_history = []
 
 if "chat_rooms" not in st.session_state:
@@ -120,6 +125,11 @@ if st.button("전송"):
             })
 
         st.session_state.chat_history.append(new_chat)
+
+        # pickle에 저장
+        with open(SAVE_FILE, "wb") as f:
+            pickle.dump(st.session_state.chat_history, f)
+
         st.experimental_rerun()
     else:
         st.warning("메시지나 파일을 입력해주세요.")
