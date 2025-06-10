@@ -4,3 +4,4 @@ plotly
 pandas
 os
 datetime
+pickle
