@@ -98,6 +98,9 @@ with col1:
 with col2:
     uploaded_file = st.file_uploader("파일", key="file_input", label_visibility="collapsed")
 
+if "trigger_rerun" not in st.session_state:
+    st.session_state.trigger_rerun = False
+
 if st.button("전송"):
     saved_file_path = None
 
@@ -132,6 +135,11 @@ if st.button("전송"):
         with open(SAVE_FILE, "wb") as f:
             pickle.dump(st.session_state.chat_history, f)
 
-        st.experimental_rerun()
+        st.session_state.trigger_rerun = True
     else:
         st.warning("메시지나 파일을 입력해주세요.")
+
+# rerun은 마지막에 실행
+if st.session_state.get("trigger_rerun"):
+    st.session_state.trigger_rerun = False
+    st.experimental_rerun()
