@@ -42,6 +42,8 @@ st.markdown("""
 if 'transactions' not in st.session_state:
     st.session_state.transactions = []  # 거래 내역을 저장
     st.session_state.accounts = {}  # 각 항목의 잔액을 저장
+    st.session_state.income = 0  # 수익 저장
+    st.session_state.expense = 0  # 비용 저장
 
 # 거래 추가 함수 (입금, 출금으로 단순화)
 def add_transaction(date, account, description, amount_in, amount_out, transaction_type):
@@ -60,20 +62,18 @@ def add_transaction(date, account, description, amount_in, amount_out, transacti
         st.session_state.accounts[account] = 0
     st.session_state.accounts[account] += amount_in - amount_out
 
+    # 수익과 비용 갱신
+    if transaction_type == '수익':
+        st.session_state.income += amount_in
+    elif transaction_type == '비용':
+        st.session_state.expense += amount_out
+
 # 수익과 비용 (Income Statement) 조회 함수
 def income_statement():
+    net_income = st.session_state.income - st.session_state.expense
     st.write("### 손익계산서 (Income Statement)")
-    
-    # 수익 입력 받기
-    revenue = st.number_input("수익 입력 💰", min_value=0.0, value=0.0)  # 수익
-    expense = st.number_input("비용 입력 💳", min_value=0.0, value=0.0)  # 비용
-
-    # 순이익 계산
-    net_income = revenue - expense
-
-    # 손익계산서 출력
-    st.write(f"총 수익: {revenue} 💰")
-    st.write(f"총 비용: {expense} 💳")
+    st.write(f"총 수익: {st.session_state.income} 💰")
+    st.write(f"총 비용: {st.session_state.expense} 💳")
     st.write(f"순이익: {net_income} 💵")
 
 # 계좌 현황 (Balance Sheet) 조회 함수
