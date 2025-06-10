@@ -43,9 +43,9 @@ def account_balance(account_name):
         st.write("항목을 찾을 수 없습니다.")
 
 def main():
-    st.title("간단한 회계 시스템")
+    st.title("회계 시스템🧾")
 
-    with st.expander("거래 입력하기"):
+    with st.expander("거래 입력하기📅"):
         date = st.date_input("날짜", value=datetime.today())
         account = st.text_input("항목 (예: 현금, 매출 등)")
         description = st.text_area("설명 (거래에 대한 간단한 설명)")
@@ -61,10 +61,10 @@ def main():
         transactions_df = pd.DataFrame(transactions)
         st.dataframe(transactions_df)
 
-    if st.button("계좌 현황 조회"):
+    if st.button("계좌 현황 조회💰"):
         balance_sheet()
 
-    if st.button("수익과 비용 조회"):
+    if st.button("수익과 비용 조회🧮"):
         income_statement()
 
 if __name__ == "__main__":
