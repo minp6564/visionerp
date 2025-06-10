@@ -88,12 +88,12 @@ def render_chat():
                     if chat["file_path"]:
                         file_name = os.path.basename(chat["file_path"])
                         with open(chat["file_path"], "rb") as f:
-                            st.download_button(
+                                st.download_button(
                                 label=f"📎 {file_name} 다운로드",
                                 data=f,
                                 file_name=file_name,
-                                key=f"download_{i}_{chat['sender']}_{file_name}"
-                            )
+                                key=f"download_{i}_{chat['sender']}_{file_name}_{chat['timestamp'].timestamp()}"
+                        )
 
                     st.caption(chat["timestamp"].strftime("%Y-%m-%d %H:%M:%S"))
 
