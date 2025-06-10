@@ -42,19 +42,4 @@ def income_statement():
     total_income = sum(entry['입금'] for entry in st.session_state.transactions if entry['유형'] == '수익')
     total_expense = sum(entry['출금'] for entry in st.session_state.transactions if entry['유형'] == '비용')
     net_income = total_income - total_expense
-    st.write("### 수익과 비용")
-    st.write(f"총 수익: {total_income}")
-    st.write(f"총 비용: {total_expense}")
-    st.write(f"순이익: {net_income}")
-
-# Streamlit UI 구성
-def main():
-    st.title("간단한 회계 시스템")
-
-    # 거래 입력 섹션
-    with st.expander("거래 입력하기"):
-        date = st.date_input("날짜", value=datetime.today())
-        account = st.text_input("항목 (예: 현금, 매출 등)")
-        description = st.text_area("설명 (거래에 대한 간단한 설명)")
-        amount_in = st.number_input("입금액", min_value=0.0, value=0.0)  # 입금
-        amount_out_
+    st.write("### 수익과 비용
