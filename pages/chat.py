@@ -74,20 +74,20 @@ else:
 
 # 채팅 보기
 st.subheader(chat_title)
-for chat in st.session_state.chat_history:
+for i, chat in enumerate(st.session_state.chat_history):
     if chat_filter(chat):
         with st.chat_message("user" if chat["sender"] == current_user else "assistant"):
-            if chat["message"]:
-                st.markdown(f"**{chat['sender']}**: {chat['message']}")
             if chat["file_path"]:
                 file_name = os.path.basename(chat["file_path"])
-                with open(chat["file_path"], "rb") as f:
-                    st.download_button(
-                        label=f"📎 {file_name} 다운로드",
-                        data=f,
-                        file_name=file_name
-                    )
-            st.caption(chat["timestamp"].strftime("%Y-%m-%d %H:%M:%S"))
+                if os.path.exists(chat["file_path"]):
+                    with open(chat["file_path"], "rb") as f:
+                        st.download_button(
+                            label=f"📎 {file_name} 다운로드",
+                            data=f,
+                            file_name=file_name,
+                            key=f"download_{i}_{chat['sender']}_{chat['timestamp'].timestamp()}"
+                        )
+
 
 st.divider()
 
