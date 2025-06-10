@@ -131,10 +131,7 @@ with col1:
 with col2:
     uploaded_file = st.file_uploader("파일", key="file_input", label_visibility="collapsed")
 
-# ✅ 전송 버튼
-if "trigger_rerun" not in st.session_state:
-    st.session_state.trigger_rerun = False
-
+# ✅ 전송 버튼 처리
 if st.button("전송", key="send_button"):
     saved_file_path = None
 
@@ -151,6 +148,7 @@ if st.button("전송", key="send_button"):
             "file_path": saved_file_path,
             "timestamp": datetime.datetime.now(),
         }
+
         if chat_mode == "1:1 채팅":
             new_chat.update({"mode": "private", "receiver": receiver})
         else:
@@ -161,7 +159,10 @@ if st.button("전송", key="send_button"):
         with open(SAVE_FILE, "wb") as f:
             pickle.dump(st.session_state.chat_history, f)
 
-        st.session_state.trigger_rerun = True
+        # ❌ rerun 없이 채팅창 다시 그리기
+        render_chat()
+        # ✅ 입력창 초기화
+        st.session_state.message_input = ""
     else:
         st.warning("메시지나 파일을 입력해주세요.")
 
