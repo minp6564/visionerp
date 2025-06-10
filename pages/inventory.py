@@ -56,12 +56,12 @@ with col1:
         supplier = st.text_input("납품업체명", placeholder="예: ABC상사")
     else:
         if available_items:
-            item_name = st.selectbox("품목명 (재고 있는 항목)", list(available_items.keys()))
+            item_name = st.selectbox("품목명", list(available_items.keys()))
             st.info(f"📦 현재 재고: {int(available_items[item_name])}개")
             # 자동 입력 (readonly)
             in_price, supplier = get_latest_in_info(item_name)
-            st.text_input("입고 단가 (최근)", value=in_price, disabled=True)
-            st.text_input("납품업체명 (최근)", value=supplier, disabled=True)
+            st.text_input("입고 단가", value=in_price, disabled=True)
+            st.text_input("납품업체명", value=supplier, disabled=True)
         else:
             item_name = None
             st.warning("⚠️ 출고 가능한 품목이 없습니다.")
