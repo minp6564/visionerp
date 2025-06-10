@@ -25,7 +25,7 @@ with st.form("inventory_form"):
     with col2:
         quantity = st.number_input("수량", min_value=1, step=1)
         manager = st.text_input("담당자명", placeholder="예: 홍길동")
-        remark = st.text_input("비고", placeholder=)
+        remark = st.text_input("비고")
 
     submitted = st.form_submit_button("✅ 등록")
 
