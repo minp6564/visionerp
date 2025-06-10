@@ -8,7 +8,7 @@ accounts = {}
 def add_entry(date, account, description, amount_in, amount_out):
     entry = {
         "날짜": date,
-        "계정": account,
+        "항목": account,
         "설명": description,
         "입금": amount_in,
         "출금": amount_out
@@ -22,7 +22,7 @@ def add_entry(date, account, description, amount_in, amount_out):
 def balance_sheet():
     balance_data = pd.DataFrame(
         [(account, balance) for account, balance in accounts.items()],
-        columns=["계정", "잔액"]
+        columns=["항목", "잔액"]
     )
     st.write("### 계좌 현황")
     st.dataframe(balance_data)
@@ -36,7 +36,6 @@ def income_statement():
     st.write(f"총 출금: {total_out}")
     st.write(f"순이익: {net_income}")
 
-# 계정 잔액 조회 함수
 def account_balance(account_name):
     if account_name in accounts:
         st.write(f"계정: {account_name} - 잔액: {accounts[account_name]}")
@@ -48,7 +47,7 @@ def main():
 
     with st.expander("거래 입력하기🧮"):
         date = st.date_input("날짜", value=datetime.today())
-        account = st.text_input("계정 (예: 현금, 매출 등)")
+        account = st.text_input("항목 (예: 현금, 매출 등)")
         description = st.text_area("설명 (거래에 대한 간단한 설명)")
         amount_in = st.number_input("입금액", min_value=0.0, value=0.0)  # 입금
         amount_out = st.number_input("출금액", min_value=0.0, value=0.0)  # 출금
