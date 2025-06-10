@@ -67,9 +67,5 @@ def main():
     if st.button("수익과 비용 조회📊"):
         income_statement()
 
-    account_to_check = st.text_input("계정 잔액 조회🏦", "")
-    if account_to_check:
-        account_balance(account_to_check)
-
 if __name__ == "__main__":
     main()
