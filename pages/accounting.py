@@ -2,23 +2,27 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 
-transactions = []
+# 데이터 저장을 위한 변수 설정 (SQLite 대신 메모리 사용)
+journal_entries = []
 accounts = {}
 
-def add_transaction(date, account, description, amount_in, amount_out):
-    transaction = {
-        "날짜": date,
-        "계정": account,
-        "설명": description,
-        "입금": amount_in,
-        "출금": amount_out
+# 거래 추가 함수
+def add_entry(date, account, description, debit, credit):
+    entry = {
+        "date": date,
+        "account": account,
+        "description": description,
+        "debit": debit,
+        "credit": credit
     }
-    transactions.append(transaction)
+    journal_entries.append(entry)
 
+    # 계정 잔액 업데이트
     if account not in accounts:
         accounts[account] = 0
-    accounts[account] += amount_in - amount_out
+    accounts[account] += debit - credit
 
+# 재무상태표 (Balance Sheet) 함수
 def balance_sheet():
     balance_data = pd.DataFrame(
         [(account, balance) for account, balance in accounts.items()],
@@ -27,30 +31,57 @@ def balance_sheet():
     st.write("### 재무상태표")
     st.dataframe(balance_data)
 
+# 손익계산서 (Income Statement) 함수
 def income_statement():
-    total_in = sum(transaction['입금'] for transaction in transactions)
-    total_out = sum(transaction['출금'] for transaction in transactions)
-    net_income = total_in - total_out
+    total_debit = sum(entry['debit'] for entry in journal_entries)
+    total_credit = sum(entry['credit'] for entry in journal_entries)
+    net_income = total_credit - total_debit
     st.write("### 손익계산서")
-    st.write(f"총 입금: {total_in}")
-    st.write(f"총 출금: {total_out}")
+    st.write(f"총 차변: {total_debit}")
+    st.write(f"총 대변: {total_credit}")
     st.write(f"순이익: {net_income}")
 
+# 잔액 조회 (Account Balance) 함수
 def account_balance(account_name):
     if account_name in accounts:
         st.write(f"계정: {account_name} - 잔액: {accounts[account_name]}")
     else:
         st.write("계정을 찾을 수 없습니다.")
 
+# Streamlit UI 구성
 def main():
-    st.title("단순 회계 시스템")
+    st.title("ERP 회계 시스템")
 
+    # 거래 입력 섹션
     with st.expander("거래 입력하기"):
         date = st.date_input("날짜", value=datetime.today())
-        account = st.text_input("계정 (예: 현금, 매출 등)")
-        description = st.text_area("설명 (간단한 설명을 입력하세요)")
-        amount_in = st.number_input("입금액", min_value=0.0, value=0.0)
-        amount_out = st.number_input("출금액", min_value=0.0, value=0.0)
+        account = st.text_input("계정")
+        description = st.text_area("설명")
+        debit = st.number_input("차변", min_value=0.0, value=0.0)
+        credit = st.number_input("대변", min_value=0.0, value=0.0)
         
         if st.button("거래 추가"):
-            add_transaction(date, account, description_
+            add_entry(date, account, description, debit, credit)
+            st.success("거래가 성공적으로 추가되었습니다!")
+
+    # 거래 목록 표시 (추가된 거래)
+    if len(journal_entries) > 0:
+        st.write("### 추가된 거래 목록")
+        journal_df = pd.DataFrame(journal_entries)
+        st.dataframe(journal_df)
+
+    # 재무상태표 조회
+    if st.button("재무상태표 조회"):
+        balance_sheet()
+
+    # 손익계산서 조회
+    if st.button("손익계산서 조회"):
+        income_statement()
+
+    # 잔액 조회
+    account_to_check = st.text_input("계정 잔액 조회", "")
+    if account_to_check:
+        account_balance(account_to_check)
+
+if __name__ == "__main__":
+    main()
