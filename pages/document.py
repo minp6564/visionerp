@@ -39,7 +39,7 @@ with st.form("upload_form"):
             st.success("✅ 문서가 업로드되었습니다.")
 
 st.subheader("🔍 문서 목록 및 다운로드")
-search = st.text_input("문서 제목 또는 업로더로 검색")
+search = st.text_input("문서 제목 또는 담당자 이름으로 검색")
 
 filtered_docs = (
     st.session_state.documents[
