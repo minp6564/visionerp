@@ -63,10 +63,10 @@ def add_balance_sheet_item():
     st.markdown('<div class="section-header">재무상태표 항목 입력</div>', unsafe_allow_html=True)
     
     # 자산 입력
-    cash_amount = st.number_input("현금 💰", min_value=0.0, value=0.0)
-    receivables_amount = st.number_input("매출채권 💳", min_value=0.0, value=0.0)
-    building_amount = st.number_input("건물 🏢", min_value=0.0, value=0.0)
-    machinery_amount = st.number_input("기계 🛠️", min_value=0.0, value=0.0)
+    cash_amount = st.number_input("현금", min_value=0.0, value=0.0)
+    receivables_amount = st.number_input("매출채권", min_value=0.0, value=0.0)
+    building_amount = st.number_input("건물", min_value=0.0, value=0.0)
+    machinery_amount = st.number_input("기계", min_value=0.0, value=0.0)
     if cash_amount > 0:
         st.session_state.assets['현금'] += cash_amount
     if receivables_amount > 0:
@@ -77,9 +77,9 @@ def add_balance_sheet_item():
         st.session_state.assets['기계'] += machinery_amount
 
     # 부채 입력
-    accounts_payable_amount = st.number_input("매입채무 💵", min_value=0.0, value=0.0)
-    short_term_debt_amount = st.number_input("단기부채 💳", min_value=0.0, value=0.0)
-    long_term_debt_amount = st.number_input("장기부채 💳", min_value=0.0, value=0.0)
+    accounts_payable_amount = st.number_input("매입채무", min_value=0.0, value=0.0)
+    short_term_debt_amount = st.number_input("단기부채", min_value=0.0, value=0.0)
+    long_term_debt_amount = st.number_input("장기부채", min_value=0.0, value=0.0)
     if accounts_payable_amount > 0:
         st.session_state.liabilities['매입채무'] += accounts_payable_amount
     if short_term_debt_amount > 0:
@@ -88,8 +88,8 @@ def add_balance_sheet_item():
         st.session_state.liabilities['장기부채'] += long_term_debt_amount
 
     # 자본 입력
-    capital_amount = st.number_input("자본금 💰", min_value=0.0, value=0.0)
-    retained_earnings_amount = st.number_input("이익잉여금 💵", min_value=0.0, value=0.0)
+    capital_amount = st.number_input("자본금", min_value=0.0, value=0.0)
+    retained_earnings_amount = st.number_input("이익잉여금", min_value=0.0, value=0.0)
     if capital_amount > 0:
         st.session_state.equity['자본금'] += capital_amount
     if retained_earnings_amount > 0:
@@ -97,7 +97,7 @@ def add_balance_sheet_item():
 
 # 재무상태표 출력 함수 (자동 계산)
 def balance_sheet():
-    st.write("### 재무상태표 (Balance Sheet)")
+    st.write("### 재무상태표")
 
     # 자산, 부채, 자본 출력
     total_assets = sum(st.session_state.assets.values())
@@ -111,25 +111,25 @@ def balance_sheet():
     formatted_equity = f"{total_equity:,.0f} 원"
     formatted_net_assets = f"{net_assets:,.0f} 원"
     
-    st.write(f"### 자산 (Assets)")
+    st.write(f"### 자산")
     st.write(f"현금: {st.session_state.assets['현금']:,.0f} 원")
     st.write(f"매출채권: {st.session_state.assets['매출채권']:,.0f} 원")
     st.write(f"건물: {st.session_state.assets['건물']:,.0f} 원")
     st.write(f"기계: {st.session_state.assets['기계']:,.0f} 원")
     st.write(f"**총 자산**: {formatted_assets} 💰")
 
-    st.write(f"### 부채 (Liabilities)")
+    st.write(f"### 부채")
     st.write(f"매입채무: {st.session_state.liabilities['매입채무']:,.0f} 원")
     st.write(f"단기부채: {st.session_state.liabilities['단기부채']:,.0f} 원")
     st.write(f"장기부채: {st.session_state.liabilities['장기부채']:,.0f} 원")
     st.write(f"**총 부채**: {formatted_liabilities} 💳")
 
-    st.write(f"### 자본 (Equity)")
+    st.write(f"### 자본")
     st.write(f"자본금: {st.session_state.equity['자본금']:,.0f} 원")
     st.write(f"이익잉여금: {st.session_state.equity['이익잉여금']:,.0f} 원")
     st.write(f"**총 자본**: {formatted_equity} 💵")
 
-    st.write(f"### 순자산 (Net Assets)")
+    st.write(f"### 순자산")
     st.write(f"**순자산**: {formatted_net_assets} 💸")
 
 # Streamlit UI 구성
