@@ -95,8 +95,9 @@ else:
     selected_room = st.session_state.selected_room
     chat_title = f"📢 [{selected_room}] 단체방"
     chat_filter = lambda chat: (
-        chat.get("mode") == "custom_group" and chat["room"] == selected_room
-    )
+    	chat.get("mode") == "private" and chat.get("pair") == frozenset([current_user, receiver])
+)
+
 
 # 채팅 표시 함수
 chat_container = st.empty()
@@ -131,15 +132,18 @@ with col1:
 with col2:
     uploaded_file = st.file_uploader("파일", key="file_input", label_visibility="collapsed")
 
+# 채팅 전송 처리
 if st.button("전송", key="send_button"):
     saved_file_path = None
 
+    # 파일 저장
     if uploaded_file:
         file_name = uploaded_file.name
         saved_file_path = os.path.join(UPLOAD_DIR, file_name)
         with open(saved_file_path, "wb") as f:
             f.write(uploaded_file.read())
 
+    # 메시지나 파일이 있을 경우 전송
     if message.strip() or saved_file_path:
         new_chat = {
             "sender": current_user,
@@ -147,13 +151,23 @@ if st.button("전송", key="send_button"):
             "file_path": saved_file_path,
             "timestamp": datetime.datetime.now(),
         }
+
+        # 1:1 채팅일 경우 사용자쌍 정보 포함
         if chat_mode == "1:1 채팅":
-            new_chat.update({"mode": "private", "receiver": receiver})
+            new_chat.update({
+                "mode": "private",
+                "receiver": receiver,
+                "pair": frozenset([current_user, receiver])
+            })
         else:
-            new_chat.update({"mode": "custom_group", "room": selected_room})
+            new_chat.update({
+                "mode": "custom_group",
+                "room": selected_room
+            })
 
         st.session_state.chat_history.append(new_chat)
 
+        # 저장
         with open(SAVE_FILE, "wb") as f:
             pickle.dump(st.session_state.chat_history, f)
 
