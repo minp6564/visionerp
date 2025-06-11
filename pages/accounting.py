@@ -62,9 +62,9 @@ def add_transaction(date, description, amount_in, amount_out, transaction_type, 
     elif transaction_type == '비용':
         st.session_state.expenses[category] += amount_out
 
-# 재무상태표 출력 함수 (자동 계산)
-def balance_sheet():
-    st.write("### 재무상태표")
+# 재무상태표 및 손익계산서 출력 함수 (자동 계산)
+def financial_statement():
+    st.write("### 재무상태표 & 손익계산서")
 
     # 자산, 부채, 자본 출력
     total_assets = sum(st.session_state.assets.values())
@@ -96,25 +96,17 @@ def balance_sheet():
     st.write(f"### 순자산")
     st.write(f"**순자산**: {formatted_net_assets} 💸")
 
-# 손익계산서 출력 함수 (급여비용 포함)
-def income_statement():
-    st.write("### 손익계산서")
-
-    # 비용 계산 (급여비용 포함)
+    # 손익계산서 출력 (급여비용 포함)
     total_expenses = sum(st.session_state.expenses.values())
     formatted_expenses = f"{total_expenses:,.0f} 원"
     
-    st.write(f"### 비용")
-    for key, value in st.session_state.expenses.items():
-        st.write(f"{key}: {value:,.0f} 원")
-    
+    st.write(f"### 손익계산서")
     st.write(f"**총 비용**: {formatted_expenses} 💵")
 
-    # 순이익 계산
+    # 순이익 계산 (수익 - 비용)
     total_revenue = 0  # 수익 항목은 추가할 수 있습니다.
     net_income = total_revenue - total_expenses
     formatted_net_income = f"{net_income:,.0f} 원"
-    st.write(f"### 순이익")
     st.write(f"**순이익**: {formatted_net_income} 💸")
 
 # Streamlit UI 구성
@@ -144,13 +136,9 @@ def main():
         transactions_df = pd.DataFrame(st.session_state.transactions)
         st.dataframe(transactions_df)
 
-    # 재무상태표 조회
-    if st.button("재무상태표 조회 📊"):
-        balance_sheet()
-
-    # 손익계산서 조회 (급여비용 포함)
-    if st.button("손익계산서 조회 📈"):
-        income_statement()
+    # 재무상태표 및 손익계산서 조회
+    if st.button("재무상태표 및 손익계산서 조회 📊"):
+        financial_statement()
 
     # 페이지 하단에 푸터 추가
     st.markdown('<div class="footer">회계 시스템을 사용해 주셔서 감사합니다! ✨</div>', unsafe_allow_html=True)
