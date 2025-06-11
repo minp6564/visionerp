@@ -35,8 +35,8 @@ st.markdown("""
 # 세션에 필요한 값들 초기화
 if 'transactions' not in st.session_state:
     st.session_state.transactions = []  # 거래 내역
-    st.session_state.money = 0  # 돈 (자산)
-    st.session_state.debt = 0  # 빚 (부채)
+    st.session_state.assets = 0  # 자산
+    st.session_state.liabilities = 0  # 부채
 
 # 거래 내역 추가 함수
 def add_transaction(date, description, amount_in, amount_out, transaction_type):
@@ -49,33 +49,34 @@ def add_transaction(date, description, amount_in, amount_out, transaction_type):
     }
     st.session_state.transactions.append(transaction)
 
-    # 돈과 빚 갱신
-    if transaction_type == '돈':
-        st.session_state.money += amount_in
-    elif transaction_type == '빚':
-        st.session_state.debt += amount_out
+    # 자산과 부채 갱신
+    if transaction_type == '자산':
+        st.session_state.assets += amount_in
+    elif transaction_type == '부채':
+        st.session_state.liabilities += amount_out
 
+# 자산, 부채 항목 입력 함수
 def add_balance_sheet_item():
     st.markdown('<div class="section-header">재무상태표 입력</div>', unsafe_allow_html=True)
 
-    # 돈 (자산) 입력
-    money_amount = st.number_input("돈 (자산) 금액 💰", min_value=0.0, value=0.0)
-    if money_amount > 0:
-        st.session_state.money += money_amount
+    # 자산 입력
+    asset_amount = st.number_input("자산 금액 💰", min_value=0.0, value=0.0)
+    if asset_amount > 0:
+        st.session_state.assets += asset_amount
 
-    # 빚 (부채) 입력
-    debt_amount = st.number_input("빚 (부채) 금액 💳", min_value=0.0, value=0.0)
-    if debt_amount > 0:
-        st.session_state.debt += debt_amount
+    # 부채 입력
+    liability_amount = st.number_input("부채 금액 💳", min_value=0.0, value=0.0)
+    if liability_amount > 0:
+        st.session_state.liabilities += liability_amount
 
-# 대차대조표 출력 함수
+# 재무상태표 출력 함수
 def balance_sheet():
-    st.write("### 재무상태표표 (Balance Sheet)")
+    st.write("### 재무상태표 (Balance Sheet)")
     
-    # 돈 (자산)과 빚 (부채) 출력
-    st.write(f"돈 (자산): {st.session_state.money} 💰")
-    st.write(f"빚 (부채): {st.session_state.debt} 💳")
-    st.write(f"순자산 (돈 - 빚): {st.session_state.money - st.session_state.debt} 💵")
+    # 자산과 부채 출력
+    st.write(f"자산: {st.session_state.assets} 💰")
+    st.write(f"부채: {st.session_state.liabilities} 💳")
+    st.write(f"순자산 (자산 - 부채): {st.session_state.assets - st.session_state.liabilities} 💵")
 
 # Streamlit UI 구성
 def main():
@@ -90,8 +91,8 @@ def main():
         amount_in = st.number_input("입금액 💰", min_value=0.0, value=0.0)  # 입금
         amount_out = st.number_input("출금액 💳", min_value=0.0, value=0.0)  # 출금
         
-        # 돈과 빚을 구분하는 입력
-        transaction_type = st.selectbox("거래 유형", ["돈", "빚"])
+        # 자산과 부채를 구분하는 입력
+        transaction_type = st.selectbox("거래 유형", ["자산", "부채"])
         
         if st.button("거래 추가 ✅"):
             add_transaction(date, description, amount_in, amount_out, transaction_type)
@@ -103,10 +104,10 @@ def main():
         transactions_df = pd.DataFrame(st.session_state.transactions)
         st.dataframe(transactions_df)
 
-    # 돈과 빚 입력
+    # 자산, 부채 입력
     add_balance_sheet_item()
 
-    # 대차대조표 조회
+    # 재무상태표 조회
     if st.button("재무상태표 조회 📊"):
         balance_sheet()
 
