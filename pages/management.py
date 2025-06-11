@@ -18,6 +18,16 @@ cursor.execute("""
         email TEXT
     )
 """)
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS attendance_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    employee_id INTEGER,
+    date TEXT,
+    clock_in TEXT,
+    clock_out TEXT,
+    location TEXT
+)
+""")
 conn.commit()
 
 # Streamlit UI
