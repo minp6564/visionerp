@@ -38,7 +38,6 @@ if 'transactions' not in st.session_state:
     st.session_state.assets = {'현금': 0, '매출채권': 0, '재고자산': 0, '장기투자': 0}  # 자산 항목
     st.session_state.liabilities = {'매입채무': 0, '단기부채': 0, '장기부채': 0}  # 부채 항목
     st.session_state.equity = {'자본금': 0, '이익잉여금': 0}  # 자본 항목
-    st.session_state.expenses = {'급여비용': 0}  # 비용 항목 추가
 
 # 거래 내역 추가 함수
 def add_transaction(date, description, amount_in, amount_out, transaction_type, category):
@@ -52,17 +51,15 @@ def add_transaction(date, description, amount_in, amount_out, transaction_type, 
     }
     st.session_state.transactions.append(transaction)
 
-    # 자산, 부채, 자본, 비용 갱신
+    # 자산, 부채, 자본 갱신
     if transaction_type == '자산':
         st.session_state.assets[category] += amount_in
     elif transaction_type == '부채':
         st.session_state.liabilities[category] += amount_out
     elif transaction_type == '자본':
         st.session_state.equity[category] += amount_in
-    elif transaction_type == '비용':
-        st.session_state.expenses[category] += amount_out
 
-# 재무상태표 및 비용 항목 출력 함수 (자동 계산)
+# 재무상태표 출력 함수 (자동 계산)
 def financial_statement():
     st.write("### 재무상태표")
 
@@ -76,13 +73,11 @@ def financial_statement():
     total_liabilities = total_current_liabilities + total_non_current_liabilities
 
     total_equity = sum(st.session_state.equity.values())
-    net_assets = total_assets - total_liabilities  # 순자산 계산
 
     # 금액을 보기 쉽게 포맷팅 (쉼표와 원 단위)
     formatted_total_assets = f"{total_assets:,.0f} 원"
     formatted_total_liabilities = f"{total_liabilities:,.0f} 원"
     formatted_total_equity = f"{total_equity:,.0f} 원"
-    formatted_net_assets = f"{net_assets:,.0f} 원"
 
     # 자산 항목
     st.write(f"### 자산")
@@ -102,20 +97,6 @@ def financial_statement():
     st.write(f"**이익잉여금**: {st.session_state.equity['이익잉여금']:,.0f} 원")
     st.write(f"**총 자본**: {formatted_total_equity} 💵")
 
-    # 순자산
-    st.write(f"### 순자산")
-    st.write(f"**순자산**: {formatted_net_assets} 💸")
-
-    # 비용 항목 출력 (급여비용 포함)
-    st.write(f"### 비용")
-    total_expenses = sum(st.session_state.expenses.values())
-    formatted_expenses = f"{total_expenses:,.0f} 원"
-    
-    for key, value in st.session_state.expenses.items():
-        st.write(f"{key}: {value:,.0f} 원")
-    
-    st.write(f"**총 비용**: {formatted_expenses} 💵")
-
 # Streamlit UI 구성
 def main():
     st.markdown('<div class="title">회계 시스템</div>', unsafe_allow_html=True)
@@ -129,8 +110,8 @@ def main():
         amount_in = st.number_input("입금액 💰", min_value=0.0, value=0.0)  # 입금
         amount_out = st.number_input("출금액 💳", min_value=0.0, value=0.0)  # 출금
         
-        # 자산, 부채, 자본, 비용을 구분하는 입력
-        transaction_type = st.selectbox("거래 유형", ["자산", "부채", "자본", "비용"])
+        # 자산, 부채, 자본을 구분하는 입력
+        transaction_type = st.selectbox("거래 유형", ["자산", "부채", "자본"])
         category = st.text_input("카테고리(예: 현금, 매입채무 등)", "")
 
         if st.button("거래 추가 ✅"):
@@ -143,8 +124,8 @@ def main():
         transactions_df = pd.DataFrame(st.session_state.transactions)
         st.dataframe(transactions_df)
 
-    # 재무상태표 및 비용 항목 조회
-    if st.button("재무상태표 및 비용 조회 📊"):
+    # 재무상태표 조회
+    if st.button("재무상태표 조회 📊"):
         financial_statement()
 
     # 페이지 하단에 푸터 추가
