@@ -1,3 +1,4 @@
+
 import streamlit as st
 import datetime
 import os
@@ -50,23 +51,26 @@ st.session_state.chat_mode = st.radio(
 )
 chat_mode = st.session_state.chat_mode
 
-# 1:1 또는 단체방 선택
+# 상대/단체방 설정
 if chat_mode == "1:1 채팅":
     receiver_candidates = [u["name"] for u in users if u["name"] != current_user]
     if "receiver" not in st.session_state:
         st.session_state.receiver = receiver_candidates[0]
-    st.session_state.receiver = st.selectbox("채팅할 상대:", receiver_candidates)
+    st.session_state.receiver = st.selectbox(
+        "채팅할 상대:", receiver_candidates,
+        index=receiver_candidates.index(st.session_state.receiver),
+        key="receiver_select"
+    )
     receiver = st.session_state.receiver
     chat_title = f"📨 {receiver} 님과의 1:1 대화"
-    chat_pair = frozenset([current_user, receiver])
     chat_filter = lambda chat: (
-        chat.get("mode") == "private" and chat.get("pair") == chat_pair
+        chat.get("mode") == "private" and {chat["sender"], chat["receiver"]} == {current_user, receiver}
     )
 else:
     with st.expander("➕ 단체방 만들기"):
         new_room_name = st.text_input("채팅방 이름", key="room_name_input")
-        new_room_members = st.multiselect("참가자 선택", [u["name"] for u in users if u["name"] != current_user])
-        if st.button("채팅방 생성"):
+        new_room_members = st.multiselect("참가자 선택", [u["name"] for u in users if u["name"] != current_user], key="room_members_input")
+        if st.button("채팅방 생성", key="create_room_button"):
             if new_room_name.strip() and new_room_members:
                 st.session_state.chat_rooms.append({
                     "name": new_room_name.strip(),
@@ -84,12 +88,14 @@ else:
     if "selected_room" not in st.session_state:
         st.session_state.selected_room = my_rooms[0]["name"]
     st.session_state.selected_room = st.selectbox(
-        "입장할 단체방", [r["name"] for r in my_rooms]
+        "입장할 단체방", [r["name"] for r in my_rooms],
+        index=[r["name"] for r in my_rooms].index(st.session_state.selected_room),
+        key="room_select"
     )
     selected_room = st.session_state.selected_room
     chat_title = f"📢 [{selected_room}] 단체방"
     chat_filter = lambda chat: (
-        chat.get("mode") == "custom_group" and chat.get("room") == selected_room
+        chat.get("mode") == "custom_group" and chat["room"] == selected_room
     )
 
 # 채팅 표시 함수
@@ -98,7 +104,7 @@ chat_container = st.empty()
 def render_chat():
     with chat_container:
         st.subheader(chat_title)
-        for chat in st.session_state.chat_history:
+        for i, chat in enumerate(st.session_state.chat_history):
             if chat_filter(chat):
                 with st.chat_message("user" if chat["sender"] == current_user else "assistant"):
                     if chat["message"]:
@@ -106,3 +112,52 @@ def render_chat():
                     if chat["file_path"] and os.path.exists(chat["file_path"]):
                         file_name = os.path.basename(chat["file_path"])
                         with open(chat["file_path"], "rb") as f:
+                            st.download_button(
+                                label=f"📎 {file_name} 다운로드",
+                                data=f,
+                                file_name=file_name,
+                                key=f"download_{uuid.uuid4()}"
+                            )
+                    st.caption(chat["timestamp"].strftime("%Y-%m-%d %H:%M:%S"))
+
+# 초기 채팅 렌더링
+render_chat()
+st.divider()
+
+# 입력 및 전송
+col1, col2 = st.columns([3, 1])
+with col1:
+    message = st.text_input("메시지를 입력하세요", key="message_input")
+with col2:
+    uploaded_file = st.file_uploader("파일", key="file_input", label_visibility="collapsed")
+
+if st.button("전송", key="send_button"):
+    saved_file_path = None
+
+    if uploaded_file:
+        file_name = uploaded_file.name
+        saved_file_path = os.path.join(UPLOAD_DIR, file_name)
+        with open(saved_file_path, "wb") as f:
+            f.write(uploaded_file.read())
+
+    if message.strip() or saved_file_path:
+        new_chat = {
+            "sender": current_user,
+            "message": message.strip() or None,
+            "file_path": saved_file_path,
+            "timestamp": datetime.datetime.now(),
+        }
+        if chat_mode == "1:1 채팅":
+            new_chat.update({"mode": "private", "receiver": receiver})
+        else:
+            new_chat.update({"mode": "custom_group", "room": selected_room})
+
+        st.session_state.chat_history.append(new_chat)
+
+        with open(SAVE_FILE, "wb") as f:
+            pickle.dump(st.session_state.chat_history, f)
+
+        st.session_state.message_input = ""  # 입력창 초기화
+        render_chat()  # 새로 그리기
+    else:
+        st.warning("메시지나 파일을 입력해주세요.")
