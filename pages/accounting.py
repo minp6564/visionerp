@@ -41,6 +41,7 @@ st.markdown("""
 # 데이터 저장을 위한 변수 설정 (SQLite 대신 메모리 사용)
 if 'transactions' not in st.session_state:
     st.session_state.transactions = []  # 거래 내역을 저장
+    st.session_state.accounts = {}  # 각 항목의 잔액을 저장
     st.session_state.income = 0  # 수익 저장
     st.session_state.expense = 0  # 비용 저장
 
@@ -55,6 +56,11 @@ def add_transaction(date, account, description, amount_in, amount_out, transacti
         "유형": transaction_type
     }
     st.session_state.transactions.append(transaction)
+
+    # 항목 잔액 업데이트
+    if account not in st.session_state.accounts:
+        st.session_state.accounts[account] = 0
+    st.session_state.accounts[account] += amount_in - amount_out
 
     # 수익과 비용 갱신
     if transaction_type == '수익':
@@ -72,8 +78,11 @@ def income_statement():
 
 # 계좌 현황 (Balance Sheet) 조회 함수
 def balance_sheet():
+    balance_data = pd.DataFrame(
+        [(account, balance) for account, balance in st.session_state.accounts.items()],
+        columns=["항목", "잔액"]
+    )
     st.write("### 계좌 현황")
-    balance_data = pd.DataFrame(st.session_state.transactions)
     st.dataframe(balance_data)
 
 # Streamlit UI 구성
@@ -102,6 +111,10 @@ def main():
         st.markdown('<div class="section-header">추가된 거래 목록</div>', unsafe_allow_html=True)
         transactions_df = pd.DataFrame(st.session_state.transactions)
         st.dataframe(transactions_df)
+
+    # 계좌 현황 조회
+    if st.button("계좌 현황 조회 💼"):
+        balance_sheet()
 
     # 수익과 비용 조회
     if st.button("수익과 비용 조회 📊"):
