@@ -114,14 +114,16 @@ def transaction_input():
     # 유효성 검사: 금액이 입력되지 않으면 경고
     if amount_in == 0 and amount_out == 0:
         st.warning("입금액 또는 출금액을 하나는 반드시 입력해야 합니다.")
+        return
+
+    # 필수 항목 유효성 검사
+    if category == "" or (amount_in == 0 and amount_out == 0):
+        st.error("카테고리와 금액을 올바르게 입력하세요.")
+        return
 
     if st.button("거래 추가 ✅"):
-        # 유효성 검사: 필수 항목이 비어 있으면 오류 처리
-        if category == "" or (amount_in == 0 and amount_out == 0):
-            st.error("카테고리와 금액을 올바르게 입력하세요.")
-        else:
-            add_transaction(date, description, amount_in, amount_out, transaction_type, category)
-            st.success("거래가 성공적으로 추가되었습니다!")
+        add_transaction(date, description, amount_in, amount_out, transaction_type, category)
+        st.success("거래가 성공적으로 추가되었습니다!")
 
 # 거래 목록 표시
 def display_transactions():
