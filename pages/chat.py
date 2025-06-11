@@ -42,13 +42,22 @@ st.session_state.current_user = st.selectbox(
 current_user = st.session_state.current_user
 
 # 채팅 모드
-if "chat_mode" not in st.session_state:
-    st.session_state.chat_mode = "1:1 채팅"
-st.session_state.chat_mode = st.radio(
-    "채팅 모드", ["1:1 채팅", "단체방 (자신 생성)"],
-    index=["1:1 채팅", "단체방 (자신 생성)"].index(st.session_state.chat_mode)
-)
-chat_mode = st.session_state.chat_mode
+# 1:1 채팅 모드일 경우
+if chat_mode == "1:1 채팅":
+    receiver_candidates = [u["name"] for u in users if u["name"] != current_user]
+    if "receiver" not in st.session_state:
+        st.session_state.receiver = receiver_candidates[0]
+    st.session_state.receiver = st.selectbox(
+        "채팅할 상대:", receiver_candidates,
+        index=receiver_candidates.index(st.session_state.receiver),
+        key="receiver_select"
+    )
+    receiver = st.session_state.receiver
+    chat_title = f"📨 {receiver} 님과의 1:1 대화"
+    chat_pair = frozenset([current_user, receiver])  # 사용자 쌍으로 구별
+    chat_filter = lambda chat: (
+        chat.get("mode") == "private" and chat.get("pair") == chat_pair
+    )
 
 # 상대/단체방 설정
 if chat_mode == "1:1 채팅":
@@ -139,24 +148,34 @@ if st.button("전송", key="send_button"):
         with open(saved_file_path, "wb") as f:
             f.write(uploaded_file.read())
 
-    if message.strip() or saved_file_path:
-        new_chat = {
-            "sender": current_user,
-            "message": message.strip() or None,
-            "file_path": saved_file_path,
-            "timestamp": datetime.datetime.now(),
-        }
-        if chat_mode == "1:1 채팅":
-            new_chat.update({"mode": "private", "receiver": receiver})
-        else:
-            new_chat.update({"mode": "custom_group", "room": selected_room})
+# 메시지 전송 처리 부분
+if message.strip() or saved_file_path:
+    new_chat = {
+        "sender": current_user,
+        "message": message.strip() or None,
+        "file_path": saved_file_path,
+        "timestamp": datetime.datetime.now(),
+    }
 
-        st.session_state.chat_history.append(new_chat)
+    if chat_mode == "1:1 채팅":
+        new_chat.update({
+            "mode": "private",
+            "receiver": receiver,
+            "pair": frozenset([current_user, receiver])  # 사용자쌍 저장
+        })
+    else:
+        new_chat.update({
+            "mode": "custom_group",
+            "room": selected_room
+        })
 
-        with open(SAVE_FILE, "wb") as f:
-            pickle.dump(st.session_state.chat_history, f)
+    st.session_state.chat_history.append(new_chat)
 
-        st.session_state.message_input = ""  # 입력창 초기화
-        render_chat()  # 새로 그리기
+    with open(SAVE_FILE, "wb") as f:
+        pickle.dump(st.session_state.chat_history, f)
+
+    st.session_state.message_input = ""  # 입력창 초기화
+    render_chat()  # 새로 그리기
+
     else:
         st.warning("메시지나 파일을 입력해주세요.")
