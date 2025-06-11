@@ -63,7 +63,8 @@ with st.form("upload_form"):
             )
             st.success(f"✅ 문서가 업로드되었습니다. 저장된 파일명: {versioned_filename}")
 
-st.subheader("🔍 문서 목록 및 다운로드")
+st.subheader("🔍 문서 목록 및 다운로드 / 삭제")
+
 search = st.text_input("문서 제목 또는 담당자 이름으로 검색")
 
 filtered_docs = (
@@ -77,16 +78,28 @@ filtered_docs = (
 if filtered_docs.empty:
     st.info("등록된 문서가 없습니다.")
 else:
-    for _, row in filtered_docs.iterrows():
+    for idx, row in filtered_docs.iterrows():
         st.write(f"📄 **{row['제목']}**")
         st.caption(f"업로더: {row['업로더']} | 등록일: {row['등록일']}")
         file_path = os.path.join(UPLOAD_DIR, row["파일명"])
-        with open(file_path, "rb") as f:
-            st.download_button(
-                label="⬇️ 다운로드",
-                data=f,
-                file_name=row["파일명"],
-                mime="application/octet-stream",
-                key=row["파일명"]
-            )
+        col1, col2 = st.columns([3,1])
+        with col1:
+            with open(file_path, "rb") as f:
+                st.download_button(
+                    label="⬇️ 다운로드",
+                    data=f,
+                    file_name=row["파일명"],
+                    mime="application/octet-stream",
+                    key=f"download_{row['파일명']}"
+                )
+        with col2:
+            if st.button("🗑️ 삭제", key=f"delete_{idx}"):
+                try:
+                    os.remove(file_path)
+                except FileNotFoundError:
+                    pass
+                st.session_state.documents = st.session_state.documents.drop(idx).reset_index(drop=True)
+                st.success(f"'{row['제목']}' 문서가 삭제되었습니다.")
+                st.experimental_rerun()
+
         st.markdown("---")
