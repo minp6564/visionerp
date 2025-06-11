@@ -87,7 +87,6 @@ else:
         file_path = os.path.join(UPLOAD_DIR, row["파일명"])
         st.write(f"📄 **{row['제목']}**")
         st.caption(f"업로더: {row['업로더']} | 등록일: {row['등록일']}")
-
         size_kb = os.path.getsize(file_path) / 1024
         st.caption(f"파일 크기: {size_kb:.1f} KB")
 
@@ -108,12 +107,22 @@ else:
                 )
         with col2:
             if st.button("🗑️ 삭제", key=f"delete_{idx}"):
-                if st.confirm(f"'{row['제목']}' 문서를 삭제할까요?"):
+                # 삭제 확인 모달
+                if st.session_state.get(f"confirm_delete_{idx}", False) is False:
+                    st.session_state[f"confirm_delete_{idx}"] = True
+                else:
                     try:
                         os.remove(file_path)
                     except FileNotFoundError:
                         pass
                     st.session_state.documents = st.session_state.documents.drop(idx).reset_index(drop=True)
                     st.success(f"'{row['제목']}' 문서가 삭제되었습니다.")
-                    st.rerun()
+                    # 상태 초기화 후 리런
+                    st.session_state[f"confirm_delete_{idx}"] = False
+                    st.experimental_rerun()
+
+        # 삭제 확인 문구 보여주기
+        if st.session_state.get(f"confirm_delete_{idx}", False):
+            st.warning(f"'{row['제목']}' 문서를 삭제하시겠습니까? 다시 삭제 버튼을 눌러 확인하세요.")
+
         st.markdown("---")
