@@ -87,8 +87,18 @@ else:
             mime="application/octet-stream",
             key=f"download_{idx}"
         )
-        if st.button("🗑️ 삭제", key=f"delete_{idx}"):
+
+        delete_input = st.text_input(
+            f"'{row['제목']}' 삭제하려면 '삭제' 입력",
+            key=f"delete_confirm_{idx}",
+            label_visibility="collapsed",
+            placeholder="삭제"
+        )
+
+        if delete_input.strip() == "삭제":
             st.session_state.documents.drop(index=idx, inplace=True)
             st.session_state.documents.reset_index(drop=True, inplace=True)
-            st.success("삭제 완료되었습니다.")
-            st.experimental_rerun()
+            st.success(f"✅ '{row['제목']}' 문서가 삭제되었습니다.")
+            st.rerun()
+
+        st.markdown("---")
