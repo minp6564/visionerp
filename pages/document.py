@@ -90,16 +90,4 @@ else:
                     data=f,
                     file_name=row["파일명"],
                     mime="application/octet-stream",
-                    key=f"download_{row['파일명']}"
-                )
-        with col2:
-            if st.button("🗑️ 삭제", key=f"delete_{idx}"):
-                try:
-                    os.remove(file_path)
-                except FileNotFoundError:
-                    pass
-                st.session_state.documents = st.session_state.documents.drop(idx).reset_index(drop=True)
-                st.success(f"'{row['제목']}' 문서가 삭제되었습니다.")
-                st.experimental_rerun()
-
-        st.markdown("---")
+                    key=f"download_{_
