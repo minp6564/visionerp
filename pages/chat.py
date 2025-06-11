@@ -1,5 +1,5 @@
 import streamlit as st
-import openai
+from openai import OpenAI
 import datetime
 
 # ✅ 현재 사용자
@@ -30,8 +30,10 @@ if "selected_bot" not in st.session_state:
 # ✅ GPT 응답 생성 함수
 def generate_gpt_reply(bot_name, user_input):
     system_prompt = bot_system_prompts.get(bot_name, "당신은 회사의 사내 직원입니다.")
+
     try:
-        response = openai.ChatCompletion.create(
+        client = OpenAI(api_key=st.session_state.api_key)
+        response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": system_prompt},
@@ -40,10 +42,9 @@ def generate_gpt_reply(bot_name, user_input):
             temperature=0.7,
             max_tokens=300
         )
-        return response.choices[0].message["content"].strip()
+        return response.choices[0].message.content.strip()
     except Exception as e:
         return f"(GPT 오류: {e})"
-
 # ✅ UI 구성
 st.set_page_config(page_title="GPT 채팅", layout="wide")
 st.title("💬 사내 GPT 채팅")
