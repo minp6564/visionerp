@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 
-# 페이지 제목 및 스타일 설정
 st.markdown("""
     <style>
         .title {
@@ -32,15 +31,13 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# 세션에 필요한 값들 초기화
 if 'transactions' not in st.session_state:
-    st.session_state.transactions = []  # 거래 내역
-    st.session_state.assets = {'현금': 0, '매출채권': 0, '건물': 0, '기계': 0}  # 자산 항목
-    st.session_state.liabilities = {'매입채무': 0, '단기부채': 0, '장기부채': 0}  # 부채 항목
-    st.session_state.equity = {'자본금': 0, '이익잉여금': 0}  # 자본 항목
-    st.session_state.expenses = {'급여비용': 0}  # 급여비용 항목 추가
+    st.session_state.transactions = [] 
+    st.session_state.assets = {'현금': 0, '매출채권': 0, '건물': 0, '기계': 0}  
+    st.session_state.liabilities = {'매입채무': 0, '단기부채': 0, '장기부채': 0}  
+    st.session_state.equity = {'자본금': 0, '이익잉여금': 0} 
+    st.session_state.expenses = {'급여비용': 0} 
 
-# 거래 내역 추가 함수
 def add_transaction(date, description, amount_in, amount_out, transaction_type, category):
     transaction = {
         "날짜": date,
@@ -62,17 +59,14 @@ def add_transaction(date, description, amount_in, amount_out, transaction_type, 
     elif transaction_type == '비용':
         st.session_state.expenses[category] += amount_out
 
-# 재무상태표 및 손익계산서 출력 함수 (자동 계산)
 def financial_statement():
-    st.write("### 재무상태표 & 손익계산서")
+    st.write("### 재무상태표")
 
-    # 자산, 부채, 자본 출력
     total_assets = sum(st.session_state.assets.values())
     total_liabilities = sum(st.session_state.liabilities.values())
     total_equity = sum(st.session_state.equity.values())
-    net_assets = total_assets - total_liabilities  # 순자산 계산
+    net_assets = total_assets - total_liabilities 
 
-    # 금액을 보기 쉽게 포맷팅 (쉼표와 원 단위)
     formatted_assets = f"{total_assets:,.0f} 원"
     formatted_liabilities = f"{total_liabilities:,.0f} 원"
     formatted_equity = f"{total_equity:,.0f} 원"
@@ -96,33 +90,27 @@ def financial_statement():
     st.write(f"### 순자산")
     st.write(f"**순자산**: {formatted_net_assets} 💸")
 
-    # 손익계산서 출력 (급여비용 포함)
     total_expenses = sum(st.session_state.expenses.values())
     formatted_expenses = f"{total_expenses:,.0f} 원"
     
     st.write(f"### 손익계산서")
     st.write(f"**총 비용**: {formatted_expenses} 💵")
 
-    # 순이익 계산 (수익 - 비용)
     total_revenue = 0  # 수익 항목은 추가할 수 있습니다.
     net_income = total_revenue - total_expenses
     formatted_net_income = f"{net_income:,.0f} 원"
     st.write(f"**순이익**: {formatted_net_income} 💸")
 
-# Streamlit UI 구성
 def main():
     st.markdown('<div class="title">회계 시스템</div>', unsafe_allow_html=True)
     st.markdown('<div class="sub-title">거래 내역을 추가하고 재무상태표를 확인하세요!</div>', unsafe_allow_html=True)
 
-    # 거래 입력 섹션
     with st.expander("거래 입력하기"):
         st.markdown('<div class="section-header">거래 입력</div>', unsafe_allow_html=True)
         date = st.date_input("날짜 📅", value=datetime.today())
         description = st.text_area("설명 (거래에 대한 간단한 설명 📝)")
-        amount_in = st.number_input("입금액 💰", min_value=0.0, value=0.0)  # 입금
-        amount_out = st.number_input("출금액 💳", min_value=0.0, value=0.0)  # 출금
-        
-        # 자산, 부채, 자본, 비용을 구분하는 입력
+        amount_in = st.number_input("입금액 💰", min_value=0.0, value=0.0)  
+        amount_out = st.number_input("출금액 💳", min_value=0.0, value=0.0) 
         transaction_type = st.selectbox("거래 유형", ["자산", "부채", "자본", "비용"])
         category = st.text_input("카테고리(예: 현금, 매입채무 등)", "")
 
@@ -130,17 +118,14 @@ def main():
             add_transaction(date, description, amount_in, amount_out, transaction_type, category)
             st.success("거래가 성공적으로 추가되었습니다!")
 
-    # 추가된 거래 목록 표시
     if len(st.session_state.transactions) > 0:
         st.markdown('<div class="section-header">추가된 거래 목록</div>', unsafe_allow_html=True)
         transactions_df = pd.DataFrame(st.session_state.transactions)
         st.dataframe(transactions_df)
 
-    # 재무상태표 및 손익계산서 조회
-    if st.button("재무상태표 및 손익계산서 조회 📊"):
+    if st.button("재무상태표 조회 📊"):
         financial_statement()
 
-    # 페이지 하단에 푸터 추가
     st.markdown('<div class="footer">회계 시스템을 사용해 주셔서 감사합니다! ✨</div>', unsafe_allow_html=True)
 
 if __name__ == "__main__":
