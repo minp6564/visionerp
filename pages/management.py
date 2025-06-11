@@ -2,7 +2,7 @@ import streamlit as st
 import sqlite3
 import pandas as pd
 from datetime import datetime
-
+from data import dummy_data_management
 # DB 연결
 conn = sqlite3.connect("employee.db", check_same_thread=False)
 cursor = conn.cursor()
@@ -28,6 +28,21 @@ CREATE TABLE IF NOT EXISTS attendance_logs (
     location TEXT
 )
 """)
+conn.commit()
+
+for _, row in employees_df.iterrows():
+    cursor.execute("""
+        INSERT INTO employees (id, name, position, department, join_date, email)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (row.id, row.name, row.position, row.department, row.join_date, row.email))
+
+# 출퇴근 로그 삽입
+for _, row in attendance_logs_df.iterrows():
+    cursor.execute("""
+        INSERT INTO attendance_logs (employee_id, date, clock_in, clock_out, location)
+        VALUES (?, ?, ?, ?, ?)
+    """, (row.employee_id, row.date, row.clock_in, row.clock_out, row.location))
+
 conn.commit()
 
 # Streamlit UI
