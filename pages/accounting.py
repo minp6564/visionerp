@@ -35,7 +35,7 @@ st.markdown("""
 # 세션에 필요한 값들 초기화
 if 'transactions' not in st.session_state:
     st.session_state.transactions = []  # 거래 내역
-    st.session_state.assets = {'현금': 0, '매출채권': 0, '건물': 0, '기계': 0}  # 자산 항목
+    st.session_state.assets = {'현금': 0, '매출채권': 0}  # 자산 항목 (건물, 기계 제외)
     st.session_state.liabilities = {'매입채무': 0, '단기부채': 0, '장기부채': 0}  # 부채 항목
     st.session_state.equity = {'자본금': 0, '이익잉여금': 0}  # 자본 항목
     st.session_state.expenses = {'급여비용': 0}  # 비용 항목 추가
