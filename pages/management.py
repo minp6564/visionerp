@@ -94,34 +94,6 @@ elif menu == "출근/퇴근 기록":
             st.info("직원을 선택해주세요.")
 
 
-
-
-elif menu == "출근퇴근 기록":
-    st.subheader("🕒 출근 / 퇴근 기록")
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    location = st.selectbox("위치", ["본사", "재택"])
-    df = pd.read_sql_query("SELECT * FROM employees", conn)
-    EMPLOYEE_ID = int(st.selectbox("직원 선택 (ID)", df["id"].tolist()))
-
-    col1, col2 = st.columns([1,1])
-
-    with col1:
-        if st.button("출근"):
-            today = datetime.now().date().isoformat()
-            cursor.execute("INSERT INTO attendance_logs (employee_id, date, clock_in, location) VALUES (?, ?, ?, ?)",
-                           (EMPLOYEE_ID, today, now, location))
-            conn.commit()
-            st.session_state.attendance = now
-            st.success(f"출근 시간 기록됨: {now}")
-    with col2:
-        if st.button("퇴근"):
-            today = datetime.now().date().isoformat()
-            cursor.execute("UPDATE attendance_logs SET clock_out=? WHERE employee_id=? AND date=?",
-                           (now, EMPLOYEE_ID, today))
-            conn.commit()
-            st.session_state.leave = now
-            st.success(f"퇴근 시간 기록됨: {now}")
-
 # 직원 수정
 elif menu == "직원 수정":
     st.subheader("🛠️ 직원 정보 수정")
