@@ -18,8 +18,6 @@ if "api_key" not in st.session_state or not st.session_state.api_key:
     st.error("❌ 먼저 홈 화면에서 OpenAI API 키를 입력해주세요.")
     st.stop()
 
-openai.api_key = st.session_state.api_key
-
 # ✅ 세션 상태 초기화
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
@@ -45,6 +43,7 @@ def generate_gpt_reply(bot_name, user_input):
         return response.choices[0].message.content.strip()
     except Exception as e:
         return f"(GPT 오류: {e})"
+
 # ✅ UI 구성
 st.set_page_config(page_title="GPT 채팅", layout="wide")
 st.title("💬 사내 GPT 채팅")
