@@ -35,8 +35,8 @@ st.markdown("""
 # 세션에 필요한 값들 초기화
 if 'transactions' not in st.session_state:
     st.session_state.transactions = []  # 거래 내역
-    st.session_state.assets = {'현금': 0, '매출채권': 0, '건물': 0, '기계': 0}  # 자산 항목
-    st.session_state.liabilities = {'매입채무': 0, '단기부채': 0, '장기부채': 0}  # 부채 항목
+    st.session_state.assets = {'유동자산': 0, '비유동자산': 0}  # 자산 항목
+    st.session_state.liabilities = {'유동부채': 0, '비유동부채': 0}  # 부채 항목
     st.session_state.equity = {'자본금': 0, '이익잉여금': 0}  # 자본 항목
 
 # 거래 내역 추가 함수
@@ -52,9 +52,9 @@ def add_transaction(date, description, amount_in, amount_out, transaction_type):
 
     # 자산, 부채, 자본 갱신
     if transaction_type == '자산':
-        st.session_state.assets['현금'] += amount_in
+        st.session_state.assets['유동자산'] += amount_in
     elif transaction_type == '부채':
-        st.session_state.liabilities['매입채무'] += amount_out
+        st.session_state.liabilities['유동부채'] += amount_out
     elif transaction_type == '자본':
         st.session_state.equity['자본금'] += amount_in
 
@@ -63,37 +63,31 @@ def add_balance_sheet_item():
     st.markdown('<div class="section-header">재무상태표 항목 입력</div>', unsafe_allow_html=True)
     
     # 자산 입력
-    cash_amount = st.number_input("현금", min_value=0.0, value=0.0)
-    receivables_amount = st.number_input("매출채권", min_value=0.0, value=0.0)
-    building_amount = st.number_input("건물", min_value=0.0, value=0.0)
-    machinery_amount = st.number_input("기계", min_value=0.0, value=0.0)
-    if cash_amount > 0:
-        st.session_state.assets['현금'] += cash_amount
-    if receivables_amount > 0:
-        st.session_state.assets['매출채권'] += receivables_amount
-    if building_amount > 0:
-        st.session_state.assets['건물'] += building_amount
-    if machinery_amount > 0:
-        st.session_state.assets['기계'] += machinery_amount
+    current_assets = st.number_input("유동자산", min_value=0.0, value=0.0)
+    non_current_assets = st.number_input("비유동자산", min_value=0.0, value=0.0)
+    
+    if current_assets > 0:
+        st.session_state.assets['유동자산'] += current_assets
+    if non_current_assets > 0:
+        st.session_state.assets['비유동자산'] += non_current_assets
 
     # 부채 입력
-    accounts_payable_amount = st.number_input("매입채무", min_value=0.0, value=0.0)
-    short_term_debt_amount = st.number_input("단기부채", min_value=0.0, value=0.0)
-    long_term_debt_amount = st.number_input("장기부채", min_value=0.0, value=0.0)
-    if accounts_payable_amount > 0:
-        st.session_state.liabilities['매입채무'] += accounts_payable_amount
-    if short_term_debt_amount > 0:
-        st.session_state.liabilities['단기부채'] += short_term_debt_amount
-    if long_term_debt_amount > 0:
-        st.session_state.liabilities['장기부채'] += long_term_debt_amount
+    current_liabilities = st.number_input("유동부채", min_value=0.0, value=0.0)
+    non_current_liabilities = st.number_input("비유동부채", min_value=0.0, value=0.0)
+    
+    if current_liabilities > 0:
+        st.session_state.liabilities['유동부채'] += current_liabilities
+    if non_current_liabilities > 0:
+        st.session_state.liabilities['비유동부채'] += non_current_liabilities
 
     # 자본 입력
-    capital_amount = st.number_input("자본금", min_value=0.0, value=0.0)
-    retained_earnings_amount = st.number_input("이익잉여금", min_value=0.0, value=0.0)
-    if capital_amount > 0:
-        st.session_state.equity['자본금'] += capital_amount
-    if retained_earnings_amount > 0:
-        st.session_state.equity['이익잉여금'] += retained_earnings_amount
+    capital = st.number_input("자본금", min_value=0.0, value=0.0)
+    retained_earnings = st.number_input("이익잉여금", min_value=0.0, value=0.0)
+    
+    if capital > 0:
+        st.session_state.equity['자본금'] += capital
+    if retained_earnings > 0:
+        st.session_state.equity['이익잉여금'] += retained_earnings
 
 # 재무상태표 출력 함수 (자동 계산)
 def balance_sheet():
@@ -112,16 +106,13 @@ def balance_sheet():
     formatted_net_assets = f"{net_assets:,.0f} 원"
     
     st.write(f"### 자산")
-    st.write(f"현금: {st.session_state.assets['현금']:,.0f} 원")
-    st.write(f"매출채권: {st.session_state.assets['매출채권']:,.0f} 원")
-    st.write(f"건물: {st.session_state.assets['건물']:,.0f} 원")
-    st.write(f"기계: {st.session_state.assets['기계']:,.0f} 원")
+    st.write(f"유동자산: {st.session_state.assets['유동자산']:,.0f} 원")
+    st.write(f"비유동자산: {st.session_state.assets['비유동자산']:,.0f} 원")
     st.write(f"**총 자산**: {formatted_assets} 💰")
 
     st.write(f"### 부채")
-    st.write(f"매입채무: {st.session_state.liabilities['매입채무']:,.0f} 원")
-    st.write(f"단기부채: {st.session_state.liabilities['단기부채']:,.0f} 원")
-    st.write(f"장기부채: {st.session_state.liabilities['장기부채']:,.0f} 원")
+    st.write(f"유동부채: {st.session_state.liabilities['유동부채']:,.0f} 원")
+    st.write(f"비유동부채: {st.session_state.liabilities['비유동부채']:,.0f} 원")
     st.write(f"**총 부채**: {formatted_liabilities} 💳")
 
     st.write(f"### 자본")
@@ -147,7 +138,7 @@ def main():
         
         # 자산, 부채, 자본을 구분하는 입력
         transaction_type = st.selectbox("거래 유형", ["자산", "부채", "자본"])
-        
+
         if st.button("거래 추가 ✅"):
             add_transaction(date, description, amount_in, amount_out, transaction_type)
             st.success("거래가 성공적으로 추가되었습니다!")
