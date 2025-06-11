@@ -102,7 +102,7 @@ def transaction_input():
     st.markdown('<div class="section-header">거래 입력하기</div>', unsafe_allow_html=True)
     date = st.date_input("날짜 📅", value=datetime.today())
     description = st.text_area("설명 (거래에 대한 간단한 설명 📝)")
-    
+
     # 금액 입력 (입금액과 출금액을 구분)
     amount_in = st.number_input("입금액 💰", min_value=0.0, value=0.0)  # 입금
     amount_out = st.number_input("출금액 💳", min_value=0.0, value=0.0)  # 출금
@@ -116,8 +116,9 @@ def transaction_input():
         st.warning("입금액 또는 출금액을 하나는 반드시 입력해야 합니다.")
 
     if st.button("거래 추가 ✅"):
+        # 유효성 검사: 필수 항목이 비어 있으면 오류 처리
         if category == "" or (amount_in == 0 and amount_out == 0):
-            st.error("카테고리 또는 금액이 올바르지 않습니다.")
+            st.error("카테고리와 금액을 올바르게 입력하세요.")
         else:
             add_transaction(date, description, amount_in, amount_out, transaction_type, category)
             st.success("거래가 성공적으로 추가되었습니다!")
