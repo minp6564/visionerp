@@ -35,7 +35,7 @@ st.markdown("""
 # 세션에 필요한 값들 초기화
 if 'transactions' not in st.session_state:
     st.session_state.transactions = []  # 거래 내역
-    st.session_state.assets = {'현금': 0, '매출채권': 0}  # 자산 항목 (건물, 기계 제외)
+    st.session_state.assets = {'현금': 0, '매출채권': 0, '재고자산': 0, '장기투자': 0}  # 자산 항목
     st.session_state.liabilities = {'매입채무': 0, '단기부채': 0, '장기부채': 0}  # 부채 항목
     st.session_state.equity = {'자본금': 0, '이익잉여금': 0}  # 자본 항목
     st.session_state.expenses = {'급여비용': 0}  # 비용 항목 추가
@@ -67,32 +67,42 @@ def financial_statement():
     st.write("### 재무상태표")
 
     # 자산, 부채, 자본 출력
-    total_assets = sum(st.session_state.assets.values())
-    total_liabilities = sum(st.session_state.liabilities.values())
+    total_current_assets = sum([st.session_state.assets[key] for key in ['현금', '매출채권', '재고자산']])
+    total_non_current_assets = st.session_state.assets['장기투자']
+    total_assets = total_current_assets + total_non_current_assets
+
+    total_current_liabilities = sum([st.session_state.liabilities[key] for key in ['매입채무', '단기부채']])
+    total_non_current_liabilities = st.session_state.liabilities['장기부채']
+    total_liabilities = total_current_liabilities + total_non_current_liabilities
+
     total_equity = sum(st.session_state.equity.values())
     net_assets = total_assets - total_liabilities  # 순자산 계산
 
     # 금액을 보기 쉽게 포맷팅 (쉼표와 원 단위)
-    formatted_assets = f"{total_assets:,.0f} 원"
-    formatted_liabilities = f"{total_liabilities:,.0f} 원"
-    formatted_equity = f"{total_equity:,.0f} 원"
+    formatted_total_assets = f"{total_assets:,.0f} 원"
+    formatted_total_liabilities = f"{total_liabilities:,.0f} 원"
+    formatted_total_equity = f"{total_equity:,.0f} 원"
     formatted_net_assets = f"{net_assets:,.0f} 원"
-    
+
+    # 자산 항목
     st.write(f"### 자산")
-    for key, value in st.session_state.assets.items():
-        st.write(f"{key}: {value:,.0f} 원")
-    st.write(f"**총 자산**: {formatted_assets} 💰")
+    st.write(f"**유동자산**: {total_current_assets:,.0f} 원")
+    st.write(f"**비유동자산**: {total_non_current_assets:,.0f} 원")
+    st.write(f"**총 자산**: {formatted_total_assets} 💰")
 
+    # 부채 항목
     st.write(f"### 부채")
-    for key, value in st.session_state.liabilities.items():
-        st.write(f"{key}: {value:,.0f} 원")
-    st.write(f"**총 부채**: {formatted_liabilities} 💳")
+    st.write(f"**유동부채**: {total_current_liabilities:,.0f} 원")
+    st.write(f"**비유동부채**: {total_non_current_liabilities:,.0f} 원")
+    st.write(f"**총 부채**: {formatted_total_liabilities} 💳")
 
+    # 자본 항목
     st.write(f"### 자본")
-    for key, value in st.session_state.equity.items():
-        st.write(f"{key}: {value:,.0f} 원")
-    st.write(f"**총 자본**: {formatted_equity} 💵")
+    st.write(f"**자본금**: {st.session_state.equity['자본금']:,.0f} 원")
+    st.write(f"**이익잉여금**: {st.session_state.equity['이익잉여금']:,.0f} 원")
+    st.write(f"**총 자본**: {formatted_total_equity} 💵")
 
+    # 순자산
     st.write(f"### 순자산")
     st.write(f"**순자산**: {formatted_net_assets} 💸")
 
