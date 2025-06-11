@@ -61,7 +61,11 @@ for chat in st.session_state.chat_history:
         st.caption(chat["timestamp"].strftime("%Y-%m-%d %H:%M:%S"))
 
 # ✅ 입력창 및 전송
-user_input = st.text_input("💬 메시지를 입력하세요", key="message_input")
+with st.container():
+    st.markdown("---")
+    user_input = st.text_input("💬 메시지를 입력하세요", key="message_input")
+    if st.button("✅ 전송") and user_input.strip():
+        now = datetime.datetime.now()
 
 if st.button("✅ 전송") and user_input.strip():
     now = datetime.datetime.now()
