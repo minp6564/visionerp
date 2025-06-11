@@ -4,9 +4,20 @@ import re
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-# 문서 목록 초기화
+# 문서 목록 초기화 및 더미 데이터 추가
 if 'documents' not in st.session_state:
     st.session_state.documents = pd.DataFrame(columns=["제목", "파일명", "업로더", "등록일", "파일데이터"])
+
+if st.session_state.documents.empty:
+    now_kst = datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d %H:%M")
+    dummy_docs = [
+        {"제목": "ERP_프로젝트_기획서", "파일명": "ERP_기획서.pdf", "업로더": "민승기", "등록일": now_kst, "파일데이터": b"Dummy PDF content"},
+        {"제목": "재고관리_매뉴얼", "파일명": "재고매뉴얼.docx", "업로더": "정하람", "등록일": now_kst, "파일데이터": b"Dummy DOCX content"},
+        {"제목": "판매_통계", "파일명": "판매통계.xlsx", "업로더": "한나영", "등록일": now_kst, "파일데이터": b"Dummy XLSX content"},
+        {"제목": "프로젝트_일정", "파일명": "일정_표.png", "업로더": "정유현", "등록일": now_kst, "파일데이터": b"Dummy PNG content"},
+        {"제목": "고객_리스트", "파일명": "고객명단.txt", "업로더": "김승현", "등록일": now_kst, "파일데이터": b"Dummy TXT content"},
+    ]
+    st.session_state.documents = pd.DataFrame(dummy_docs)
 
 # 버전 있는 파일명 생성
 def get_versioned_filename(filename):
@@ -102,7 +113,7 @@ else:
                     st.session_state.documents.drop(index=idx, inplace=True)
                     st.session_state.documents.reset_index(drop=True, inplace=True)
                     st.success(f"✅ '{row['제목']}' 문서가 삭제되었습니다.")
-                    st.rerun()
+                    st.experimental_rerun()
                 else:
                     st.warning("❗ 삭제하려면 '삭제'라고 입력해 주세요.")
 
