@@ -88,9 +88,6 @@ if in_price > 0 and out_price > 0:
 else:
     st.info("마진율을 계산하려면 입고/출고 단가 모두 입력해야 합니다.")
 
-# -----------------------------
-# 등록 버튼
-# -----------------------------
 if st.button("✅ 등록"):
     if inout_type == "출고":
         if not item_name:
@@ -103,18 +100,37 @@ if st.button("✅ 등록"):
         register = True
 
     if 'register' in locals() and register:
-        new_log = {
-            "날짜": datetime.now().strftime("%Y-%m-%d %H:%M"),
-            "품목명": item_name,
-            "구분": inout_type,
-            "수량": quantity,
-            "입고단가": in_price,
-            "출고단가": out_price,
-            "마진율": margin_rate if margin_rate is not None else "",
-            "납품업체명": supplier,
-            "담당자명": manager,
-            "비고": remark
-        }
+        now = datetime.now().strftime("%Y-%m-%d %H:%M")
+
+        # ✅ 분기 처리: 입고 vs 출고
+        if inout_type == "입고":
+            new_log = {
+                "날짜": now,
+                "품목명": item_name,
+                "구분": inout_type,
+                "수량": quantity,
+                "입고단가": in_price,
+                "예상출고단가": expected_price,  # ✅ 입고 시만 입력
+                "출고단가": 0,
+                "마진율": "",
+                "납품업체명": supplier,
+                "담당자명": manager,
+                "비고": remark
+            }
+        else:  # 출고
+            new_log = {
+                "날짜": now,
+                "품목명": item_name,
+                "구분": inout_type,
+                "수량": quantity,
+                "입고단가": in_price,
+                "예상출고단가": "",
+                "출고단가": out_price,
+                "마진율": margin_rate if margin_rate is not None else "",
+                "납품업체명": supplier,
+                "담당자명": manager,
+                "비고": remark
+            }
 
         st.session_state.inventory_logs = pd.concat(
             [st.session_state.inventory_logs, pd.DataFrame([new_log])],
