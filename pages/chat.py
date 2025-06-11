@@ -51,7 +51,7 @@ if "chat_history" not in st.session_state:
 if "selected_bot" not in st.session_state:
     st.session_state.selected_bot = gpt_bots[0]
 
-st.title(f"🤖 {current_user}님의 GPT 단체방 채팅")
+st.title(f"사내 채팅")
 
 # 챗봇 선택
 st.session_state.selected_bot = st.selectbox("대화할 GPT 챗봇 선택", gpt_bots)
