@@ -1,3 +1,8 @@
+import pandas as pd
+from datetime import datetime, timedelta
+
+base_time = datetime.now()
+
 inventory_logs = pd.DataFrame([
     {
         "날짜": "2025-06-09 10:00",
