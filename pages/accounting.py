@@ -40,23 +40,24 @@ if 'transactions' not in st.session_state:
     st.session_state.equity = {'자본금': 0, '이익잉여금': 0}  # 자본 항목
 
 # 거래 내역 추가 함수
-def add_transaction(date, description, amount_in, amount_out, transaction_type):
+def add_transaction(date, description, amount_in, amount_out, transaction_type, category):
     transaction = {
         "날짜": date,
         "설명": description,
         "입금": amount_in,
         "출금": amount_out,
-        "유형": transaction_type
+        "유형": transaction_type,
+        "카테고리": category
     }
     st.session_state.transactions.append(transaction)
 
     # 자산, 부채, 자본 갱신
     if transaction_type == '자산':
-        st.session_state.assets['현금'] += amount_in
+        st.session_state.assets[category] += amount_in
     elif transaction_type == '부채':
-        st.session_state.liabilities['매입채무'] += amount_out
+        st.session_state.liabilities[category] += amount_out
     elif transaction_type == '자본':
-        st.session_state.equity['자본금'] += amount_in
+        st.session_state.equity[category] += amount_in
 
 # 자산, 부채, 자본 항목 입력 함수
 def add_balance_sheet_item():
@@ -147,9 +148,10 @@ def main():
         
         # 자산, 부채, 자본을 구분하는 입력
         transaction_type = st.selectbox("거래 유형", ["자산", "부채", "자본"])
-        
+        category = st.text_input("카테고리(예: 현금, 매입채무 등)", "")
+
         if st.button("거래 추가 ✅"):
-            add_transaction(date, description, amount_in, amount_out, transaction_type)
+            add_transaction(date, description, amount_in, amount_out, transaction_type, category)
             st.success("거래가 성공적으로 추가되었습니다!")
 
     # 추가된 거래 목록 표시
