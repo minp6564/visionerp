@@ -82,7 +82,7 @@ else:
         st.write(f"📄 **{row['제목']}**")
         st.caption(f"업로더: {row['업로더']} | 등록일: {row['등록일']}")
         file_path = os.path.join(UPLOAD_DIR, row["파일명"])
-        col1, col2 = st.columns([3,1])
+        col1, col2 = st.columns([3, 1])
         with col1:
             with open(file_path, "rb") as f:
                 st.download_button(
@@ -100,6 +100,6 @@ else:
                     pass
                 st.session_state.documents = st.session_state.documents.drop(idx).reset_index(drop=True)
                 st.success(f"'{row['제목']}' 문서가 삭제되었습니다.")
-                st.experimental_rerun()
+                st.rerun()
 
         st.markdown("---")
