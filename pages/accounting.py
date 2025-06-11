@@ -58,44 +58,17 @@ def add_transaction(date, description, amount_in, amount_out, transaction_type):
     elif transaction_type == '자본':
         st.session_state.equity['자본금'] += amount_in
 
-# 자산, 부채, 자본 항목 입력 함수
-def add_balance_sheet_item():
-    st.markdown('<div class="section-header">재무상태표 항목 입력</div>', unsafe_allow_html=True)
-    
-    # 자산 입력
-    cash_amount = st.number_input("현금 💰", min_value=0.0, value=0.0)
-    receivables_amount = st.number_input("매출채권 💳", min_value=0.0, value=0.0)
-    if cash_amount > 0:
-        st.session_state.assets['현금'] += cash_amount
-    if receivables_amount > 0:
-        st.session_state.assets['매출채권'] += receivables_amount
-
-    # 부채 입력
-    accounts_payable_amount = st.number_input("매입채무 💵", min_value=0.0, value=0.0)
-    short_term_debt_amount = st.number_input("단기부채 💳", min_value=0.0, value=0.0)
-    if accounts_payable_amount > 0:
-        st.session_state.liabilities['매입채무'] += accounts_payable_amount
-    if short_term_debt_amount > 0:
-        st.session_state.liabilities['단기부채'] += short_term_debt_amount
-
-    # 자본 입력
-    capital_amount = st.number_input("자본금 💰", min_value=0.0, value=0.0)
-    retained_earnings_amount = st.number_input("이익잉여금 💵", min_value=0.0, value=0.0)
-    if capital_amount > 0:
-        st.session_state.equity['자본금'] += capital_amount
-    if retained_earnings_amount > 0:
-        st.session_state.equity['이익잉여금'] += retained_earnings_amount
-
-# 재무상태표 출력 함수 (자동 계산)
+# 자동으로 재무상태표 계산하는 함수
 def balance_sheet():
     st.write("### 재무상태표 (Balance Sheet)")
 
-    # 자산, 부채, 자본 출력
+    # 자산, 부채, 자본 계산
     total_assets = sum(st.session_state.assets.values())
     total_liabilities = sum(st.session_state.liabilities.values())
     total_equity = sum(st.session_state.equity.values())
     net_assets = total_assets - total_liabilities  # 순자산 계산
     
+    # 금액을 보기 쉽게 포맷팅 (쉼표와 원 단위)
     formatted_assets = f"{total_assets:,.0f} 원"
     formatted_liabilities = f"{total_liabilities:,.0f} 원"
     formatted_equity = f"{total_equity:,.0f} 원"
@@ -131,9 +104,6 @@ def main():
         st.markdown('<div class="section-header">추가된 거래 목록</div>', unsafe_allow_html=True)
         transactions_df = pd.DataFrame(st.session_state.transactions)
         st.dataframe(transactions_df)
-
-    # 자산, 부채, 자본 입력
-    add_balance_sheet_item()
 
     # 재무상태표 조회
     if st.button("재무상태표 조회 📊"):
