@@ -19,6 +19,29 @@ st.markdown("""
 ### 오늘의 주요 지표 요약
 """)
 
+
+# -----------------------------
+# GPT API Key 입력 영역
+# -----------------------------
+st.divider()
+st.subheader("🧠 GPT API 연결")
+
+# ✅ API 키 유지
+if "api_key" not in st.session_state:
+    st.session_state.api_key = ""
+
+st.session_state.api_key = st.text_input(
+    "🔑 OpenAI API Key",
+    type="password",
+    value=st.session_state.api_key,
+    placeholder="sk-로 시작하는 키 입력"
+)
+
+if st.session_state.api_key:
+    st.success("✅ API 키가 세션에 저장되었습니다.")
+else:
+    st.info("⚠️ GPT 기능을 사용하려면 API 키를 입력해야 합니다.")
+
 # -----------------------------
 # 더미 데이터
 # -----------------------------
