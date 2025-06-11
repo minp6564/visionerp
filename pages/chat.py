@@ -1,16 +1,28 @@
 import streamlit as st
-from openai import OpenAI
 import datetime
+from openai import OpenAI
+from data import dummy_data_management as dummy
 
-# ✅ 현재 사용자
+# 현재 사용자
 current_user = "이사원"
 
-# ✅ GPT 역할 목록 및 성격
-gpt_bots = ["박과장", "김대리", "정부장"]
-bot_system_prompts = {
-    "박과장": "당신은 전략적인 사고와 명확한 지시를 중시하는, 경험 있는 과장입니다.",
-    "김대리": "당신은 상사의 지시를 이해하고 실무적으로 반응하는 예의 바른 대리입니다.",
-    "정부장": "당신은 책임감 있고 권위 있는 부장입니다. 부드럽지만 단호하게 말하세요.",
+# 직원 정보 불러오기
+employees_df = dummy.employees_df
+
+# ✅ GPT 봇 후보로 등록 (이사원은 제외)
+gpt_bots_df = employees_df[employees_df["name"] != current_user]
+
+# 봇 이름 목록
+gpt_bots = gpt_bots_df["name"].tolist()
+
+# GPT system prompt 자동 생성
+def generate_prompt(row):
+    return f"""당신은 {row['department']} 부서의 {row['position']} {row['name']}입니다.
+당신은 ERP 시스템에서 사용자와 업무 관련 대화를 나누는 AI 비서 역할을 합니다.
+답변은 직책에 맞는 말투로 하되, 명확하고 간결하게 대응하세요."""
+
+bot_prompts = {
+    row["name"]: generate_prompt(row) for _, row in gpt_bots_df.iterrows()
 }
 
 # ✅ API 키 확인
@@ -25,16 +37,15 @@ if "chat_history" not in st.session_state:
 if "selected_bot" not in st.session_state:
     st.session_state.selected_bot = gpt_bots[0]
 
-# ✅ GPT 응답 생성 함수
+# ✅ GPT 응답 함수
 def generate_gpt_reply(bot_name, user_input):
-    system_prompt = bot_system_prompts.get(bot_name, "당신은 회사의 사내 직원입니다.")
-
     try:
+        prompt = bot_prompts.get(bot_name, "당신은 회사 직원입니다.")
         client = OpenAI(api_key=st.session_state.api_key)
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": system_prompt},
+                {"role": "system", "content": prompt},
                 {"role": "user", "content": user_input}
             ],
             temperature=0.7,
@@ -44,27 +55,27 @@ def generate_gpt_reply(bot_name, user_input):
     except Exception as e:
         return f"(GPT 오류: {e})"
 
-# ✅ UI 구성
+# ✅ UI
 st.set_page_config(page_title="GPT 채팅", layout="wide")
 st.title("💬 사내 GPT 채팅")
 
-# 봇 선택
 selected_bot = st.selectbox("🤖 대화할 GPT 직원 선택", gpt_bots)
 st.session_state.selected_bot = selected_bot
-st.divider()
 
-# ✅ 대화 출력
+st.divider()
 st.subheader(f"🗨️ {selected_bot} 님과의 대화")
+
+# 대화 내용
 for chat in st.session_state.chat_history:
     with st.chat_message("user" if chat["sender"] == current_user else "assistant"):
         st.markdown(f"**{chat['sender']}**: {chat['message']}")
         st.caption(chat["timestamp"].strftime("%Y-%m-%d %H:%M:%S"))
 
-# ✅ 입력창 및 전송
+# 입력창
 with st.container():
     st.markdown("---")
     user_input = st.text_input("💬 메시지를 입력하세요", key="message_input")
-    
+
 if st.button("✅ 전송") and user_input.strip():
     now = datetime.datetime.now()
 
