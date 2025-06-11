@@ -48,46 +48,50 @@ col1, col2 = st.columns(2)
 with col1:
     inout_type = st.selectbox("구분", ["입고", "출고"])
 
-    # 품목 선택/입력
     if inout_type == "입고":
         item_name = st.text_input("품목명", placeholder="예: 철판 1.2T")
         in_price = st.number_input("입고 단가 (₩)", min_value=0, step=100)
+        expected_price = st.number_input("예상 출고 단가 (₩)", min_value=0, step=100)
         supplier = st.text_input("납품업체명", placeholder="예: ABC상사")
+        out_price = 0
     else:
         if available_items:
             item_name = st.selectbox("품목명 (재고 있는 항목)", list(available_items.keys()))
             st.info(f"📦 현재 재고: {int(available_items[item_name])}개")
-            # 자동 입력 (readonly)
             in_price, supplier = get_latest_in_info(item_name)
             st.text_input("입고 단가 (최근)", value=in_price, disabled=True)
             st.text_input("납품업체명 (최근)", value=supplier, disabled=True)
+            expected_price = ""
+            out_price = st.number_input("출고 단가 (₩)", min_value=0, step=100)
         else:
             item_name = None
-            st.warning("⚠️ 출고 가능한 품목이 없습니다.")
+            expected_price = ""
             in_price, supplier = 0, ""
+            out_price = 0
+            st.warning("⚠️ 출고 가능한 품목이 없습니다.")
 
 with col2:
     quantity = st.number_input("수량", min_value=1, step=1)
-    out_price = st.number_input("출고 단가 (₩)", min_value=0, step=100)
-
     if inout_type == "입고":
         manager = st.text_input("입고 담당자", placeholder="예: 홍길동")
     else:
         manager = st.text_input("출고 담당자", placeholder="예: 이철수")
-
     remark = st.text_input("비고")
 
 # -----------------------------
-# 실시간 마진율 계산
+# 실시간 마진율 계산 (출고 시에만)
 # -----------------------------
 st.divider()
 margin_rate = None
-if in_price > 0 and out_price > 0:
+if inout_type == "출고" and in_price > 0 and out_price > 0:
     margin_rate = round((out_price - in_price) / in_price * 100, 2)
     st.success(f"💹 실시간 마진율: `{margin_rate}%`")
-else:
+elif inout_type == "출고":
     st.info("마진율을 계산하려면 입고/출고 단가 모두 입력해야 합니다.")
 
+# -----------------------------
+# 등록 버튼
+# -----------------------------
 if st.button("✅ 등록"):
     if inout_type == "출고":
         if not item_name:
@@ -102,35 +106,19 @@ if st.button("✅ 등록"):
     if 'register' in locals() and register:
         now = datetime.now().strftime("%Y-%m-%d %H:%M")
 
-        # ✅ 분기 처리: 입고 vs 출고
-        if inout_type == "입고":
-            new_log = {
-                "날짜": now,
-                "품목명": item_name,
-                "구분": inout_type,
-                "수량": quantity,
-                "입고단가": in_price,
-                "예상출고단가": expected_price,  # ✅ 입고 시만 입력
-                "출고단가": 0,
-                "마진율": "",
-                "납품업체명": supplier,
-                "담당자명": manager,
-                "비고": remark
-            }
-        else:  # 출고
-            new_log = {
-                "날짜": now,
-                "품목명": item_name,
-                "구분": inout_type,
-                "수량": quantity,
-                "입고단가": in_price,
-                "예상출고단가": "",
-                "출고단가": out_price,
-                "마진율": margin_rate if margin_rate is not None else "",
-                "납품업체명": supplier,
-                "담당자명": manager,
-                "비고": remark
-            }
+        new_log = {
+            "날짜": now,
+            "품목명": item_name,
+            "구분": inout_type,
+            "수량": quantity,
+            "입고단가": in_price,
+            "예상출고단가": expected_price,
+            "출고단가": out_price,
+            "마진율": margin_rate if margin_rate is not None else "",
+            "납품업체명": supplier,
+            "담당자명": manager,
+            "비고": remark
+        }
 
         st.session_state.inventory_logs = pd.concat(
             [st.session_state.inventory_logs, pd.DataFrame([new_log])],
