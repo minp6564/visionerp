@@ -42,7 +42,7 @@ bot_replies = {
 def generate_gpt_reply(bot_name, user_input):
     prompt = bot_prompts.get(bot_name, "")
     reply = random.choice(bot_replies.get(bot_name, ["네, 확인했습니다."]))
-    return f"{reply}  \n\n_({bot_name}: {prompt})_"
+    return reply
 
 # 세션 상태 초기화
 if "chat_history" not in st.session_state:
