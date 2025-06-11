@@ -55,9 +55,8 @@ def add_transaction(date, description, amount_in, amount_out, transaction_type):
     elif transaction_type == '빚':
         st.session_state.debt += amount_out
 
-# 대차대조표 항목 입력 함수
 def add_balance_sheet_item():
-    st.markdown('<div class="section-header">대차대조표 입력</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">재무상태표 입력</div>', unsafe_allow_html=True)
 
     # 돈 (자산) 입력
     money_amount = st.number_input("돈 (자산) 금액 💰", min_value=0.0, value=0.0)
@@ -71,7 +70,7 @@ def add_balance_sheet_item():
 
 # 대차대조표 출력 함수
 def balance_sheet():
-    st.write("### 대차대조표 (Balance Sheet)")
+    st.write("### 재무상태표표 (Balance Sheet)")
     
     # 돈 (자산)과 빚 (부채) 출력
     st.write(f"돈 (자산): {st.session_state.money} 💰")
@@ -80,8 +79,8 @@ def balance_sheet():
 
 # Streamlit UI 구성
 def main():
-    st.markdown('<div class="title">간단한 회계 시스템</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sub-title">거래 내역을 추가하고 대차대조표를 확인하세요!</div>', unsafe_allow_html=True)
+    st.markdown('<div class="title">회계 시스템</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sub-title">거래 내역을 추가하고 재무상태표를 확인하세요!</div>', unsafe_allow_html=True)
 
     # 거래 입력 섹션
     with st.expander("거래 입력하기"):
@@ -108,11 +107,11 @@ def main():
     add_balance_sheet_item()
 
     # 대차대조표 조회
-    if st.button("대차대조표 조회 📊"):
+    if st.button("재무상태표 조회 📊"):
         balance_sheet()
 
     # 페이지 하단에 푸터 추가
-    st.markdown('<div class="footer">간단한 회계 시스템을 사용해 주셔서 감사합니다! ✨</div>', unsafe_allow_html=True)
+    st.markdown('<div class="footer">회계 시스템을 사용해 주셔서 감사합니다! ✨</div>', unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
