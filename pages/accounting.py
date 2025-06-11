@@ -97,32 +97,48 @@ def financial_statement():
     st.write(f"**이익잉여금**: {st.session_state.equity['이익잉여금']:,.0f} 원")
     st.write(f"**총 자본**: {formatted_total_equity} 💵")
 
+# 거래 입력 섹션
+def transaction_input():
+    st.markdown('<div class="section-header">거래 입력하기</div>', unsafe_allow_html=True)
+    date = st.date_input("날짜 📅", value=datetime.today())
+    description = st.text_area("설명 (거래에 대한 간단한 설명 📝)")
+    
+    # 금액 입력 (입금액과 출금액을 구분)
+    amount_in = st.number_input("입금액 💰", min_value=0.0, value=0.0)  # 입금
+    amount_out = st.number_input("출금액 💳", min_value=0.0, value=0.0)  # 출금
+
+    # 자산, 부채, 자본 구분 선택
+    transaction_type = st.selectbox("거래 유형", ["자산", "부채", "자본"])
+    category = st.text_input("카테고리(예: 현금, 매입채무 등)", "")
+
+    # 유효성 검사: 금액이 입력되지 않으면 경고
+    if amount_in == 0 and amount_out == 0:
+        st.warning("입금액 또는 출금액을 하나는 반드시 입력해야 합니다.")
+
+    if st.button("거래 추가 ✅"):
+        if category == "" or (amount_in == 0 and amount_out == 0):
+            st.error("카테고리 또는 금액이 올바르지 않습니다.")
+        else:
+            add_transaction(date, description, amount_in, amount_out, transaction_type, category)
+            st.success("거래가 성공적으로 추가되었습니다!")
+
+# 거래 목록 표시
+def display_transactions():
+    if len(st.session_state.transactions) > 0:
+        st.markdown('<div class="section-header">추가된 거래 목록</div>', unsafe_allow_html=True)
+        transactions_df = pd.DataFrame(st.session_state.transactions)
+        st.dataframe(transactions_df)
+
 # Streamlit UI 구성
 def main():
     st.markdown('<div class="title">회계 시스템</div>', unsafe_allow_html=True)
     st.markdown('<div class="sub-title">거래 내역을 추가하고 재무상태표를 확인하세요!</div>', unsafe_allow_html=True)
 
-    # 거래 입력 섹션
-    with st.expander("거래 입력하기"):
-        st.markdown('<div class="section-header">거래 입력</div>', unsafe_allow_html=True)
-        date = st.date_input("날짜 📅", value=datetime.today())
-        description = st.text_area("설명 (거래에 대한 간단한 설명 📝)")
-        amount_in = st.number_input("입금액 💰", min_value=0.0, value=0.0)  # 입금
-        amount_out = st.number_input("출금액 💳", min_value=0.0, value=0.0)  # 출금
-        
-        # 자산, 부채, 자본을 구분하는 입력
-        transaction_type = st.selectbox("거래 유형", ["자산", "부채", "자본"])
-        category = st.text_input("카테고리(예: 현금, 매입채무 등)", "")
+    # 거래 입력
+    transaction_input()
 
-        if st.button("거래 추가 ✅"):
-            add_transaction(date, description, amount_in, amount_out, transaction_type, category)
-            st.success("거래가 성공적으로 추가되었습니다!")
-
-    # 추가된 거래 목록 표시
-    if len(st.session_state.transactions) > 0:
-        st.markdown('<div class="section-header">추가된 거래 목록</div>', unsafe_allow_html=True)
-        transactions_df = pd.DataFrame(st.session_state.transactions)
-        st.dataframe(transactions_df)
+    # 거래 목록 표시
+    display_transactions()
 
     # 재무상태표 조회
     if st.button("재무상태표 조회 📊"):
