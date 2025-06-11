@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+from data import dummy_data
 
 st.set_page_config(page_title="재고 입출고", layout="wide")
 st.title("📦 재고 입출고 등록")
@@ -9,9 +10,7 @@ st.title("📦 재고 입출고 등록")
 # 세션 상태 초기화
 # -----------------------------
 if "inventory_logs" not in st.session_state:
-    st.session_state.inventory_logs = pd.DataFrame(
-        columns=["날짜", "품목명", "구분", "수량", "입고단가", "출고단가", "마진율", "납품업체명", "담당자명", "비고"]
-    )
+    st.session_state.inventory_logs = dummy_data.inventory_logs.copy()
 
 # -----------------------------
 # 재고/입고 정보 계산 함수
