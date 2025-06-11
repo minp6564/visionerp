@@ -6,7 +6,7 @@ import random
 import openai
 
 # 🔐 API Key 설정
-openai.api_key = st.secrets["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"]
+openai.api_key = st.secrets[".."]
 
 # 폴더 생성
 UPLOAD_DIR = "data/uploads"
