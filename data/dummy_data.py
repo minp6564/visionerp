@@ -1,16 +1,11 @@
-
-import pandas as pd
-from datetime import datetime, timedelta
-
-base_time = datetime.now()
-
 inventory_logs = pd.DataFrame([
     {
-        "날짜": (base_time - timedelta(days=2)).strftime("%Y-%m-%d %H:%M"),
+        "날짜": "2025-06-09 10:00",
         "품목명": "철판 1.2T",
         "구분": "입고",
         "수량": 100,
         "입고단가": 1200,
+        "예상출고단가": 1800,
         "출고단가": 0,
         "마진율": "",
         "납품업체명": "ABC상사",
@@ -18,13 +13,14 @@ inventory_logs = pd.DataFrame([
         "비고": "초기 입고"
     },
     {
-        "날짜": (base_time - timedelta(days=1)).strftime("%Y-%m-%d %H:%M"),
+        "날짜": "2025-06-10 11:00",
         "품목명": "철판 1.2T",
         "구분": "출고",
         "수량": 20,
         "입고단가": 1200,
-        "출고단가": 1800,
-        "마진율": 50.0,
+        "예상출고단가": "",
+        "출고단가": 1900,
+        "마진율": 58.33,
         "납품업체명": "ABC상사",
         "담당자명": "이철수",
         "비고": "초도 납품"
