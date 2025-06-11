@@ -16,10 +16,17 @@ gpt_bots_df = employees_df[employees_df["name"] != current_user]
 gpt_bots = gpt_bots_df["name"].tolist()
 
 # GPT system prompt 자동 생성
+# system_prompt 생성 시 employees_df 전체를 추가
 def generate_prompt(row):
+    employee_list = "\n".join(
+        f"{r['name']} ({r['position']}, {r['department']}, {r['email']})"
+        for _, r in employees_df.iterrows()
+    )
     return f"""당신은 {row['department']} 부서의 {row['position']} {row['name']}입니다.
-당신은 ERP 시스템에서 사용자와 업무 관련 대화를 나누는 AI 비서 역할을 합니다.
-답변은 직책에 맞는 말투로 하되, 명확하고 간결하게 대응하세요."""
+ERP 시스템에서 사용자와 대화하며 업무를 지원합니다.
+다음은 전체 직원 명단입니다:
+{employee_list}
+답변은 직책에 맞는 말투로 하세요."""
 
 bot_prompts = {
     row["name"]: generate_prompt(row) for _, row in gpt_bots_df.iterrows()
