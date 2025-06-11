@@ -3,6 +3,7 @@ import pandas as pd
 import os
 import re
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 UPLOAD_DIR = "uploaded_docs"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -49,11 +50,13 @@ with st.form("upload_form"):
             with open(file_path, "wb") as f:
                 f.write(uploaded_file.getbuffer())
 
+            now_kst = datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d %H:%M")
+
             new_doc = pd.DataFrame([{
                 "제목": title,
                 "파일명": versioned_filename,
                 "업로더": uploader,
-                "등록일": datetime.now().strftime("%Y-%m-%d %H:%M")
+                "등록일": now_kst
             }])
             st.session_state.documents = pd.concat(
                 [st.session_state.documents, new_doc], ignore_index=True
