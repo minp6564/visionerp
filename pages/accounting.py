@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 
-# 스타일링을 위한 HTML/CSS 코드 추가
+# 페이지 스타일링
 st.markdown("""
     <style>
         .title {
@@ -29,25 +29,19 @@ st.markdown("""
             font-size: 14px;
             color: #00796B;
         }
-        .card {
-            background-color: #E0F2F1;
-            border-radius: 10px;
-            padding: 15px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
     </style>
     """, unsafe_allow_html=True)
 
-# 데이터 저장을 위한 변수 설정 (SQLite 대신 메모리 사용)
+# 세션에 필요한 값들 초기화
 if 'transactions' not in st.session_state:
-    st.session_state.transactions = []  # 거래 내역을 저장
-    st.session_state.income = 0  # 수익 저장
-    st.session_state.expense = 0  # 비용 저장
-    st.session_state.assets = {}  # 자산 항목을 저장
-    st.session_state.liabilities = {}  # 부채 항목을 저장
-    st.session_state.equity = {}  # 자본 항목을 저장
+    st.session_state.transactions = []  # 거래 내역
+    st.session_state.income = 0  # 수익
+    st.session_state.expense = 0  # 비용
+    st.session_state.assets = {}  # 자산
+    st.session_state.liabilities = {}  # 부채
+    st.session_state.equity = {}  # 자본
 
-# 거래 추가 함수 (입금, 출금으로 단순화)
+# 거래 내역 추가 함수
 def add_transaction(date, account, description, amount_in, amount_out, transaction_type):
     transaction = {
         "날짜": date,
@@ -65,9 +59,9 @@ def add_transaction(date, account, description, amount_in, amount_out, transacti
     elif transaction_type == '비용':
         st.session_state.expense += amount_out
 
-# 자산, 부채, 자본 항목 입력 함수
+# 대차대조표 항목 입력 함수
 def add_balance_sheet_item():
-    st.markdown('<div class="section-header">대차대조표 입력</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">대차대조표 항목 입력</div>', unsafe_allow_html=True)
     
     # 자산 입력
     asset_name = st.text_input("자산 항목 이름 💼")
@@ -87,25 +81,27 @@ def add_balance_sheet_item():
     if equity_name and equity_amount > 0:
         st.session_state.equity[equity_name] = equity_amount
 
-# 대차대조표 (Balance Sheet) 조회 함수
+# 대차대조표 출력 함수
 def balance_sheet():
     st.write("### 대차대조표 (Balance Sheet)")
     
     # 자산, 부채, 자본 출력
-    asset_data = pd.DataFrame(st.session_state.assets.items(), columns=["자산 항목", "금액"])
-    liability_data = pd.DataFrame(st.session_state.liabilities.items(), columns=["부채 항목", "금액"])
-    equity_data = pd.DataFrame(st.session_state.equity.items(), columns=["자본 항목", "금액"])
+    if st.session_state.assets:
+        asset_data = pd.DataFrame(st.session_state.assets.items(), columns=["자산 항목", "금액"])
+        st.write("#### 자산")
+        st.dataframe(asset_data)
     
-    st.write("#### 자산")
-    st.dataframe(asset_data)
+    if st.session_state.liabilities:
+        liability_data = pd.DataFrame(st.session_state.liabilities.items(), columns=["부채 항목", "금액"])
+        st.write("#### 부채")
+        st.dataframe(liability_data)
     
-    st.write("#### 부채")
-    st.dataframe(liability_data)
-    
-    st.write("#### 자본")
-    st.dataframe(equity_data)
+    if st.session_state.equity:
+        equity_data = pd.DataFrame(st.session_state.equity.items(), columns=["자본 항목", "금액"])
+        st.write("#### 자본")
+        st.dataframe(equity_data)
 
-# 수익과 비용 (Income Statement) 조회 함수
+# 손익계산서 출력 함수
 def income_statement():
     net_income = st.session_state.income - st.session_state.expense
     st.write("### 손익계산서 (Income Statement)")
@@ -113,7 +109,7 @@ def income_statement():
     st.write(f"총 비용: {st.session_state.expense} 💳")
     st.write(f"순이익: {net_income} 💵")
 
-# 계좌 현황 (Balance Sheet) 조회 함수
+# 거래 내역 조회 함수
 def transaction_summary():
     st.write("### 거래 내역")
     balance_data = pd.DataFrame(st.session_state.transactions)
