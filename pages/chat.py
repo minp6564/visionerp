@@ -18,6 +18,8 @@ if "api_key" not in st.session_state or not st.session_state.api_key:
     st.error("❌ 먼저 홈 화면에서 OpenAI API 키를 입력해주세요.")
     st.stop()
 
+openai.api_key = st.session_state.api_key
+
 # ✅ 세션 상태 초기화
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
@@ -45,40 +47,50 @@ def generate_gpt_reply(bot_name, user_input):
         return f"(GPT 오류: {e})"
 
 # ✅ UI 구성
-st.set_page_config(page_title="GPT 채팅", layout="wide")
-st.title("💬 사내 GPT 채팅")
+st.set_page_config(page_title="채팅", layout="wide")
+st.title("💬 사내 채팅")
 
 # 봇 선택
-selected_bot = st.selectbox("🤖 대화할 GPT 직원 선택", gpt_bots)
+selected_bot = st.selectbox("직원 목록", gpt_bots)
 st.session_state.selected_bot = selected_bot
 st.divider()
 
 # ✅ 대화 출력
 st.subheader(f"🗨️ {selected_bot} 님과의 대화")
-for chat in st.session_state.chat_history:
-    with st.chat_message("user" if chat["sender"] == current_user else "assistant"):
-        st.markdown(f"**{chat['sender']}**: {chat['message']}")
-        st.caption(chat["timestamp"].strftime("%Y-%m-%d %H:%M:%S"))
 
-# ✅ 입력창 및 전송
-user_input = st.text_input("💬 메시지를 입력하세요", key="message_input")
+chat_container = st.container()
+with chat_container:
+    for chat in st.session_state.chat_history:
+        align = "right" if chat["sender"] == current_user else "left"
+        with st.container():
+            st.markdown(
+                f"<div style='text-align: {align}; padding: 5px 10px; border-radius: 8px; margin-bottom: 5px; background-color: {'#DCF8C6' if align=='right' else '#FFFFFF'}; display: inline-block;'>"
+                f"<strong>{chat['sender']}</strong>: {chat['message']}<br>"
+                f"<span style='font-size: 10px; color: gray;'>{chat['timestamp'].strftime('%Y-%m-%d %H:%M:%S')}</span>"
+                f"</div>",
+                unsafe_allow_html=True
+            )
 
-if st.button("✅ 전송") and user_input.strip():
-    now = datetime.datetime.now()
+# ✅ 입력창 및 전송 - 하단 배치
+with st.container():
+    st.markdown("---")
+    user_input = st.text_input("💬 메시지를 입력하세요", key="message_input")
+    if st.button("✅ 전송") and user_input.strip():
+        now = datetime.datetime.now()
 
-    # 유저 메시지 저장
-    st.session_state.chat_history.append({
-        "sender": current_user,
-        "message": user_input.strip(),
-        "timestamp": now
-    })
+        # 유저 메시지 저장
+        st.session_state.chat_history.append({
+            "sender": current_user,
+            "message": user_input.strip(),
+            "timestamp": now
+        })
 
-    # GPT 응답
-    reply = generate_gpt_reply(selected_bot, user_input.strip())
-    st.session_state.chat_history.append({
-        "sender": selected_bot,
-        "message": reply,
-        "timestamp": datetime.datetime.now()
-    })
+        # GPT 응답
+        reply = generate_gpt_reply(selected_bot, user_input.strip())
+        st.session_state.chat_history.append({
+            "sender": selected_bot,
+            "message": reply,
+            "timestamp": datetime.datetime.now()
+        })
 
-    st.rerun()
+        st.rerun()
