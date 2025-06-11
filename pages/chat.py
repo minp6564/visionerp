@@ -96,7 +96,7 @@ with col2:
                 "timestamp": datetime.datetime.now(),
             })
 
-            st.session_state.message_input = ""
+            #st.session_state.message_input = ""
             st.rerun()
         else:
             st.warning("메시지를 입력하세요.")
