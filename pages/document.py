@@ -13,9 +13,17 @@ st.title("📚 문서 등록 및 공유 페이지")
 
 with st.form("upload_form"):
     st.subheader("📤 문서 업로드")
-    title = st.text_input("문서 제목")
-    uploader = st.text_input("담당자 명")
+
     uploaded_file = st.file_uploader("문서 파일 업로드", type=["pdf", "docx", "xlsx", "png", "jpg", "txt"])
+
+    # 업로드된 파일명이 있으면 문서 제목 기본값으로 자동 입력, 없으면 빈칸
+    if uploaded_file is not None:
+        title = st.text_input("문서 제목", value=uploaded_file.name)
+    else:
+        title = st.text_input("문서 제목")
+
+    uploader = st.text_input("담당자 명")
+
     submitted = st.form_submit_button("업로드")
 
     if submitted:
@@ -65,3 +73,4 @@ else:
                 key=row["파일명"]
             )
         st.markdown("---")
+
