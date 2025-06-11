@@ -88,17 +88,22 @@ else:
             key=f"download_{idx}"
         )
 
-        delete_input = st.text_input(
-            f"'{row['제목']}' 삭제하려면 '삭제' 입력",
-            key=f"delete_confirm_{idx}",
-            label_visibility="collapsed",
-            placeholder="삭제"
-        )
-
-        if delete_input.strip() == "삭제":
-            st.session_state.documents.drop(index=idx, inplace=True)
-            st.session_state.documents.reset_index(drop=True, inplace=True)
-            st.success(f"✅ '{row['제목']}' 문서가 삭제되었습니다.")
-            st.rerun()
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            delete_input = st.text_input(
+                f"'{row['제목']}' 삭제 확인용 입력",
+                key=f"delete_input_{idx}",
+                label_visibility="collapsed",
+                placeholder="삭제"
+            )
+        with col2:
+            if st.button("🗑️ 삭제", key=f"delete_btn_{idx}"):
+                if delete_input.strip() == "삭제":
+                    st.session_state.documents.drop(index=idx, inplace=True)
+                    st.session_state.documents.reset_index(drop=True, inplace=True)
+                    st.success(f"✅ '{row['제목']}' 문서가 삭제되었습니다.")
+                    st.rerun()
+                else:
+                    st.warning("❗ 삭제하려면 '삭제'라고 입력해 주세요.")
 
         st.markdown("---")
