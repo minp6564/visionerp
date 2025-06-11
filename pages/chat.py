@@ -43,6 +43,7 @@ def generate_gpt_reply(bot_name, user_input):
         return response.choices[0].message.content.strip()
     except Exception as e:
         return f"(GPT 오류: {e})"
+
 # ✅ UI 구성
 st.set_page_config(page_title="GPT 채팅", layout="wide")
 st.title("💬 사내 GPT 채팅")
