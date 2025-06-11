@@ -40,54 +40,58 @@ if 'transactions' not in st.session_state:
     st.session_state.equity = {'자본금': 0, '이익잉여금': 0}  # 자본 항목
 
 # 거래 내역 추가 함수
-def add_transaction(date, description, amount_in, amount_out, transaction_type):
+def add_transaction(date, description, amount_in, amount_out, transaction_type, category):
     transaction = {
         "날짜": date,
         "설명": description,
         "입금": amount_in,
         "출금": amount_out,
-        "유형": transaction_type
+        "유형": transaction_type,
+        "카테고리": category
     }
     st.session_state.transactions.append(transaction)
 
     # 자산, 부채, 자본 갱신
     if transaction_type == '자산':
-        st.session_state.assets['유동자산'] += amount_in
+        if category == '유동자산':
+            st.session_state.assets['유동자산'] += amount_in
+        elif category == '비유동자산':
+            st.session_state.assets['비유동자산'] += amount_in
     elif transaction_type == '부채':
-        st.session_state.liabilities['유동부채'] += amount_out
+        if category == '유동부채':
+            st.session_state.liabilities['유동부채'] += amount_out
+        elif category == '비유동부채':
+            st.session_state.liabilities['비유동부채'] += amount_out
     elif transaction_type == '자본':
-        st.session_state.equity['자본금'] += amount_in
+        if category == '자본금':
+            st.session_state.equity['자본금'] += amount_in
+        elif category == '이익잉여금':
+            st.session_state.equity['이익잉여금'] += amount_in
 
 # 자산, 부채, 자본 항목 입력 함수
 def add_balance_sheet_item():
     st.markdown('<div class="section-header">재무상태표 항목 입력</div>', unsafe_allow_html=True)
     
     # 자산 입력
-    current_assets = st.number_input("유동자산", min_value=0.0, value=0.0)
-    non_current_assets = st.number_input("비유동자산", min_value=0.0, value=0.0)
+    asset_type = st.selectbox("자산 카테고리", ["유동자산", "비유동자산"])
+    asset_amount = st.number_input(f"{asset_type} 금액", min_value=0.0, value=0.0)
     
-    if current_assets > 0:
-        st.session_state.assets['유동자산'] += current_assets
-    if non_current_assets > 0:
-        st.session_state.assets['비유동자산'] += non_current_assets
+    if asset_amount > 0:
+        add_transaction(datetime.today(), "자산 입력", asset_amount, 0, "자산", asset_type)
 
     # 부채 입력
-    current_liabilities = st.number_input("유동부채", min_value=0.0, value=0.0)
-    non_current_liabilities = st.number_input("비유동부채", min_value=0.0, value=0.0)
+    liability_type = st.selectbox("부채 카테고리", ["유동부채", "비유동부채"])
+    liability_amount = st.number_input(f"{liability_type} 금액", min_value=0.0, value=0.0)
     
-    if current_liabilities > 0:
-        st.session_state.liabilities['유동부채'] += current_liabilities
-    if non_current_liabilities > 0:
-        st.session_state.liabilities['비유동부채'] += non_current_liabilities
+    if liability_amount > 0:
+        add_transaction(datetime.today(), "부채 입력", 0, liability_amount, "부채", liability_type)
 
     # 자본 입력
-    capital = st.number_input("자본금", min_value=0.0, value=0.0)
-    retained_earnings = st.number_input("이익잉여금", min_value=0.0, value=0.0)
+    equity_type = st.selectbox("자본 카테고리", ["자본금", "이익잉여금"])
+    equity_amount = st.number_input(f"{equity_type} 금액", min_value=0.0, value=0.0)
     
-    if capital > 0:
-        st.session_state.equity['자본금'] += capital
-    if retained_earnings > 0:
-        st.session_state.equity['이익잉여금'] += retained_earnings
+    if equity_amount > 0:
+        add_transaction(datetime.today(), "자본 입력", equity_amount, 0, "자본", equity_type)
 
 # 재무상태표 출력 함수 (자동 계산)
 def balance_sheet():
@@ -139,8 +143,10 @@ def main():
         # 자산, 부채, 자본을 구분하는 입력
         transaction_type = st.selectbox("거래 유형", ["자산", "부채", "자본"])
 
+        category = st.selectbox("카테고리 선택", ["유동자산", "비유동자산", "유동부채", "비유동부채", "자본금", "이익잉여금"])
+        
         if st.button("거래 추가 ✅"):
-            add_transaction(date, description, amount_in, amount_out, transaction_type)
+            add_transaction(date, description, amount_in, amount_out, transaction_type, category)
             st.success("거래가 성공적으로 추가되었습니다!")
 
     # 추가된 거래 목록 표시
