@@ -112,3 +112,66 @@ with st.form("upload_form", clear_on_submit=True):
         })
 
         st.success(f"✅ 문서 업로드 및 요약 완료: {filename}")
+
+# ✅ 검색 및 정렬
+st.subheader("🔍 문서 목록")
+col1, col2 = st.columns(2)
+with col1:
+    search = st.text_input("문서 제목 또는 담당자 검색")
+with col2:
+    ext_filter = st.selectbox("확장자 필터", ["전체", "pdf", "docx", "xlsx", "png", "jpg", "txt"])
+
+sort_by = st.selectbox("정렬 기준", ["등록일", "제목", "업로더"])
+sort_order = st.radio("정렬 순서", ["내림차순", "오름차순"], horizontal=True)
+
+docs = st.session_state.documents.copy()
+
+if search:
+    docs = docs[docs.apply(
+        lambda r: search.lower() in r["제목"].lower() or search.lower() in r["업로더"].lower(),
+        axis=1
+    )]
+if ext_filter != "전체":
+    docs = docs[docs["파일명"].str.lower().str.endswith(ext_filter)]
+
+docs = docs.sort_values(by=sort_by, ascending=(sort_order == "오름차순")).reset_index(drop=True)
+
+st.markdown(f"**총 문서 수: {len(docs)}개**")
+if docs.empty:
+    st.info("등록된 문서가 없습니다.")
+else:
+    for idx, row in docs.iterrows():
+        with st.expander(f"📄 {row['제목']}"):
+            st.caption(f"업로더: {row['업로더']} | 등록일: {row['등록일']}")
+            st.download_button(
+                "⬇️ 다운로드",
+                data=row["파일데이터"],
+                file_name=row["파일명"],
+                mime="application/octet-stream",
+                key=f"download_{idx}"
+            )
+            if row.get("요약"):
+                st.markdown("**📌 요약 내용:**")
+                st.info(row["요약"])
+            if row.get("임베딩"):
+                if st.button("🔎 임베딩 값 보기", key=f"embedding_btn_{idx}"):
+                    st.json(row["임베딩"], expanded=False)
+
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                delete_input = st.text_input(
+                    f"'{row['제목']}' 삭제 확인용 입력",
+                    key=f"delete_input_{idx}",
+                    label_visibility="collapsed",
+                    placeholder="삭제"
+                )
+            with col2:
+                if st.button("🗑️ 삭제", key=f"delete_btn_{idx}"):
+                    if delete_input.strip() == "삭제":
+                        st.session_state.documents.drop(index=idx, inplace=True)
+                        st.session_state.documents.reset_index(drop=True, inplace=True)
+                        st.success(f"✅ '{row['제목']}' 문서가 삭제되었습니다.")
+                        st.experimental_rerun()
+                    else:
+                        st.warning("❗ 삭제하려면 '삭제'라고 입력해 주세요.")
+            st.markdown("---")
