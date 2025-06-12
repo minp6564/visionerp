@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import datetime
 import plotly.express as px
-from data.dummy.py import inventory_logs
+from data.dummy_data import inventory_logs
 
 # 📅 날짜
 today = datetime.date.today()
