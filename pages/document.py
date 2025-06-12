@@ -6,14 +6,15 @@ from zoneinfo import ZoneInfo
 from openai import OpenAI
 from data import dummy_data_management as dummy  # ✅ 직원 데이터 불러오기
 import fitz  # PyMuPDF
+import os
 
 # ✅ 가장 먼저 페이지 설정
 st.set_page_config(page_title="문서 관리", layout="wide")
 
-# 문서 목록 초기화 및 더미 데이터 추가
+# 문서 및 임베딩 데이터 초기화
 if 'documents' not in st.session_state:
     st.session_state.documents = pd.DataFrame(columns=[
-        "제목", "파일명", "업로더", "등록일", "파일데이터", "요약"
+        "제목", "파일명", "업로더", "등록일", "파일데이터", "요약", "임베딩"
     ])
 
 # ✅ 홈에서 입력된 API 키 사용 (chat.py와 동일하게 연동됨)
@@ -33,9 +34,9 @@ def get_versioned_filename(filename):
     new_version = max(versions) + 1 if versions else None
     return filename if new_version is None else f"{name}_v{new_version}{ext}"
 
-# GPT 요약 함수
+# GPT 요약 및 임베딩 함수
 @st.cache_data(show_spinner=False)
-def summarize_text_with_gpt(text):
+def summarize_and_embed_with_gpt(text):
     try:
         client = OpenAI(api_key=st.session_state.api_key)
         response = client.chat.completions.create(
@@ -46,16 +47,23 @@ def summarize_text_with_gpt(text):
             ],
             temperature=0.3
         )
-        return response.choices[0].message.content.strip()
+        summary = response.choices[0].message.content.strip()
+
+        embedding_response = client.embeddings.create(
+            model="text-embedding-3-small",
+            input=text[:8191]
+        )
+        embedding = embedding_response.data[0].embedding
+        return summary, embedding
     except Exception as e:
-        return f"요약 실패: {e}"
+        return f"요약 실패: {e}", []
 
 # PDF → 텍스트 추출
 def extract_text_from_pdf(file_bytes):
     try:
         pdf = fitz.open(stream=file_bytes, filetype="pdf")
         return "\n".join(page.get_text() for page in pdf)
-    except Exception as e:
+    except Exception:
         return ""
 
 # 타이틀 및 업로드 폼
@@ -79,9 +87,9 @@ with st.form("upload_form"):
 
             if filename.lower().endswith(".pdf"):
                 text = extract_text_from_pdf(file_bytes)
-                summary = summarize_text_with_gpt(text)
+                summary, embedding = summarize_and_embed_with_gpt(text)
             else:
-                summary = "(요약은 PDF 문서만 지원됩니다)"
+                summary, embedding = "(요약은 PDF 문서만 지원됩니다)", []
 
             new_doc = pd.DataFrame([{
                 "제목": title,
@@ -89,7 +97,8 @@ with st.form("upload_form"):
                 "업로더": uploader,
                 "등록일": now_kst,
                 "파일데이터": file_bytes,
-                "요약": summary
+                "요약": summary,
+                "임베딩": embedding
             }])
             st.session_state.documents = pd.concat([st.session_state.documents, new_doc], ignore_index=True)
             st.success(f"✅ 문서 업로드 및 요약 완료: {filename}")
