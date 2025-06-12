@@ -55,39 +55,15 @@ if "selected_chat_target" not in st.session_state:
              (chat.get("receiver") == name or chat.get("receiver") == current_user)),
             "메시지 없음")
 
-        # HTML 클릭 영역
-        block_key = f"click_{name}"
-        js = f"""
-            <script>
-            const el = window.parent || window;
-            document.addEventListener("DOMContentLoaded", function() {{
-                const box = document.getElementById("{block_key}");
-                if (box) {{
-                    box.onclick = function() {{
-                        const form = document.getElementById("form_{block_key}");
-                        form.requestSubmit();
-                    }}
-                }}
-            }});
-            </script>
-        """
-        
-
         with st.container():
-        if st.button(label=f"{name} ({position}, {department})
-최근: {last_msg[:50]}", key=f"btn_{name}", use_container_width=True):
-            st.session_state.selected_chat_target = name
-            st.rerun()
-            st.markdown(
-                f"""
-                <div id="{block_key}" style='border: 1px solid #ccc; border-radius: 8px; padding: 10px;
-                            margin-bottom: 10px; background-color: #f9f9f9; cursor: pointer;'>
-                    <div style='font-weight: bold;'>{name} ({position}, {department})</div>
-                    <div style='color: gray; margin-top: 5px;'>최근: {last_msg[:50]}</div>
-                </div>
-                """,
-                unsafe_allow_html=True
+            box = st.button(
+                label=f"{name} ({position}, {department})\n최근: {last_msg[:50]}",
+                key=f"btn_{name}",
+                use_container_width=True
             )
+            if box:
+                st.session_state.selected_chat_target = name
+                st.rerun()
 else:
     # 2단계: 채팅창 UI
     selected_bot = st.session_state.selected_chat_target
