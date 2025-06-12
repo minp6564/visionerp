@@ -39,62 +39,77 @@ if "api_key" not in st.session_state or not st.session_state.api_key:
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
-if "selected_bot" not in st.session_state:
-    st.session_state.selected_bot = gpt_bots[0]
+if "selected_chat_target" not in st.session_state:
+    # 1단계: 사용자 목록 UI
+    st.set_page_config(page_title="GPT 채팅", layout="wide")
+    st.title("💬 사내 GPT 채팅")
+    st.subheader("📋 대화할 GPT 직원 선택")
 
-# ✅ GPT 응답 함수
-def generate_gpt_reply(bot_name, user_input):
-    try:
-        prompt = bot_prompts.get(bot_name, "당신은 회사 직원입니다.")
-        client = OpenAI(api_key=st.session_state.api_key)
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": prompt},
-                {"role": "user", "content": user_input}
-            ],
-            temperature=0.7,
-            max_tokens=300
-        )
-        return response.choices[0].message.content.strip()
-    except Exception as e:
-        return f"(GPT 오류: {e})"
+    for name in gpt_bots:
+        # 최근 메시지 찾기
+        last_msg = next((chat["message"] for chat in reversed(st.session_state.chat_history)
+                         if chat["sender"] in (name, current_user) and (chat.get("receiver") == name or chat.get("receiver") == current_user)), "메시지 없음")
+        if st.button(f"👤 {name} - 최근: {last_msg[:30]}"):
+            st.session_state.selected_chat_target = name
+            st.rerun()
+else:
+    # 2단계: 채팅창 UI
+    selected_bot = st.session_state.selected_chat_target
 
-# ✅ UI 렌더링
-st.set_page_config(page_title="GPT 채팅", layout="wide")
-st.title("💬 사내 GPT 채팅")
+    # GPT 응답 함수
+    def generate_gpt_reply(bot_name, user_input):
+        try:
+            prompt = bot_prompts.get(bot_name, "당신은 회사 직원입니다.")
+            client = OpenAI(api_key=st.session_state.api_key)
+            response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": prompt},
+                    {"role": "user", "content": user_input}
+                ],
+                temperature=0.7,
+                max_tokens=300
+            )
+            return response.choices[0].message.content.strip()
+        except Exception as e:
+            return f"(GPT 오류: {e})"
 
-selected_bot = st.selectbox("🤖 대화할 GPT 직원 선택", gpt_bots)
-st.session_state.selected_bot = selected_bot
+    st.set_page_config(page_title="GPT 채팅", layout="wide")
+    st.title("💬 사내 GPT 채팅")
+    st.subheader(f"🗨️ {selected_bot} 님과의 대화")
 
-st.divider()
-st.subheader(f"🗨️ {selected_bot} 님과의 대화")
+    if st.button("← 직원 목록으로 돌아가기"):
+        del st.session_state.selected_chat_target
+        st.rerun()
 
-# 대화 출력
-for chat in st.session_state.chat_history:
-    with st.chat_message("user" if chat["sender"] == current_user else "assistant"):
-        st.markdown(f"**{chat['sender']}**: {chat['message']}")
-        st.caption(chat["timestamp"].strftime("%Y-%m-%d %H:%M:%S"))
+    # 대화 출력
+    for chat in st.session_state.chat_history:
+        if {chat.get("sender"), chat.get("receiver")} == {current_user, selected_bot}:
+            with st.chat_message("user" if chat["sender"] == current_user else "assistant"):
+                st.markdown(f"**{chat['sender']}**: {chat['message']}")
+                st.caption(chat["timestamp"].strftime("%Y-%m-%d %H:%M:%S"))
 
-# ✅ 입력창 (하단 고정, Enter로 전송)
-user_input = st.chat_input("💬 메시지를 입력하세요")
+    # 입력창 (하단 고정, Enter로 전송)
+    user_input = st.chat_input("💬 메시지를 입력하세요")
 
-if user_input and user_input.strip():
-    now = datetime.datetime.now()
+    if user_input and user_input.strip():
+        now = datetime.datetime.now()
 
-    # 유저 메시지 저장
-    st.session_state.chat_history.append({
-        "sender": current_user,
-        "message": user_input.strip(),
-        "timestamp": now
-    })
+        # 유저 메시지 저장
+        st.session_state.chat_history.append({
+            "sender": current_user,
+            "receiver": selected_bot,
+            "message": user_input.strip(),
+            "timestamp": now
+        })
 
-    # GPT 응답
-    reply = generate_gpt_reply(selected_bot, user_input.strip())
-    st.session_state.chat_history.append({
-        "sender": selected_bot,
-        "message": reply,
-        "timestamp": datetime.datetime.now()
-    })
+        # GPT 응답
+        reply = generate_gpt_reply(selected_bot, user_input.strip())
+        st.session_state.chat_history.append({
+            "sender": selected_bot,
+            "receiver": current_user,
+            "message": reply,
+            "timestamp": datetime.datetime.now()
+        })
 
-    st.rerun()
+        st.rerun()
