@@ -69,8 +69,12 @@ def extract_text_from_pdf(file_bytes):
 # ✅ 타이틀
 st.title("📚 문서 등록 및 공유")
 
-# ✅ GPT 검색어 입력
-gpt_query = st.text_input("💡 GPT 기반 문서 검색어 입력")
+# ✅ 검색 입력
+col1, col2 = st.columns(2)
+with col1:
+    search = st.text_input("문서 제목 또는 담당자 검색")
+with col2:
+    gpt_query = st.text_input("💡 GPT 기반 문서 검색어 입력")
 
 # ✅ 문서 업로드 폼
 with st.form("upload_form", clear_on_submit=True):
@@ -103,8 +107,14 @@ with st.form("upload_form", clear_on_submit=True):
         st.session_state.documents = pd.concat([st.session_state.documents, new_doc], ignore_index=True)
         st.success(f"✅ 문서 업로드 및 요약 완료: {filename}")
 
-# ✅ GPT 검색 수행
+# ✅ 문서 검색 수행
 filtered_docs = st.session_state.documents.copy()
+
+if search:
+    filtered_docs = filtered_docs[filtered_docs.apply(
+        lambda r: search.lower() in r["제목"].lower() or search.lower() in r["업로더"].lower(), axis=1
+    )]
+
 if gpt_query:
     try:
         client = OpenAI(api_key=st.session_state.api_key)
