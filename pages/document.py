@@ -6,7 +6,8 @@ from zoneinfo import ZoneInfo
 from openai import OpenAI
 from data import dummy_data_management as dummy  # ✅ 직원 데이터 불러오기
 import fitz  # PyMuPDF
-import os
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
 
 # ✅ 가장 먼저 페이지 설정
 st.set_page_config(page_title="문서 관리", layout="wide")
@@ -16,9 +17,6 @@ if 'documents' not in st.session_state:
     st.session_state.documents = pd.DataFrame(columns=[
         "제목", "파일명", "업로더", "등록일", "파일데이터", "요약", "임베딩"
     ])
-
-if "document_chat_history" not in st.session_state:
-    st.session_state.document_chat_history = {}
 
 # ✅ 홈에서 입력된 API 키 사용 (chat.py와 동일하게 연동됨)
 if "api_key" not in st.session_state or not st.session_state.api_key:
@@ -108,37 +106,40 @@ with st.form("upload_form", clear_on_submit=True):
             st.success(f"✅ 문서 업로드 및 요약 완료: {filename}")
             uploaded_file = None
 
-# 문서 목록 검색/정렬
-st.subheader("🔍 문서 목록")
-col1, col2 = st.columns(2)
-with col1:
-    search = st.text_input("문서 제목 또는 담당자 검색")
-with col2:
-    ext_filter = st.selectbox("확장자 필터", ["전체", "pdf", "docx", "xlsx", "png", "jpg", "txt"])
+# GPT 기반 검색어 입력
+st.subheader("🔍 문서 검색 및 관리")
+gpt_query = st.text_input("💡 GPT 기반 검색어 입력")
 
-sort_by = st.selectbox("정렬 기준", ["등록일", "제목", "업로더"])
-sort_order = st.radio("정렬 순서", ["내림차순", "오름차순"], horizontal=True)
-
-# 필터링
+# 검색 임베딩 생성 및 유사도 계산
 docs = st.session_state.documents.copy()
-if search:
-    docs = docs[docs.apply(
-        lambda r: search.lower() in r["제목"].lower() or search.lower() in r["업로더"].lower(),
-        axis=1
-    )]
-if ext_filter != "전체":
-    docs = docs[docs["파일명"].str.lower().str.endswith(ext_filter)]
+if gpt_query:
+    try:
+        client = OpenAI(api_key=st.session_state.api_key)
+        query_embedding = client.embeddings.create(
+            model="text-embedding-3-small",
+            input=gpt_query
+        ).data[0].embedding
 
-# 정렬 적용
-docs = docs.sort_values(by=sort_by, ascending=(sort_order == "오름차순")).reset_index(drop=True)
+        doc_embeddings = docs["임베딩"].tolist()
+        similarities = []
+        for emb in doc_embeddings:
+            if emb:
+                sim = cosine_similarity([query_embedding], [emb])[0][0]
+                similarities.append(sim)
+            else:
+                similarities.append(0.0)
+        docs["유사도"] = similarities
+        docs = docs.sort_values(by="유사도", ascending=False)
+    except Exception as e:
+        st.warning(f"검색 임베딩 실패: {e}")
 
-# 출력
+# 문서 목록 출력
 st.markdown(f"**총 문서 수: {len(docs)}개**")
 if docs.empty:
     st.info("등록된 문서가 없습니다.")
 else:
     for idx, row in docs.iterrows():
-        with st.expander(f"📄 {row['제목']}"):
+        with st.expander(f"📄 {row['제목']}" + (f" (유사도: {row['유사도']:.2f})" if "유사도" in row else "")):
             st.caption(f"업로더: {row['업로더']} | 등록일: {row['등록일']}")
             st.download_button(
                 "⬇️ 다운로드",
@@ -151,42 +152,10 @@ else:
                 st.markdown("**📌 요약 내용:**")
                 st.info(row["요약"])
 
-            # ✅ 문서 기반 GPT 채팅 기능
-            st.markdown("**💬 문서 기반 채팅**")
-            chat_key = f"doc_chat_{idx}"
-            if chat_key not in st.session_state.document_chat_history:
-                st.session_state.document_chat_history[chat_key] = []
-
-            for msg in st.session_state.document_chat_history[chat_key]:
-                role = "user" if msg["role"] == "user" else "assistant"
-                st.chat_message(role).markdown(msg["content"])
-
-            user_query = st.chat_input("문서에 대해 질문하세요", key=f"chat_input_{idx}")
-            if user_query:
-                st.session_state.document_chat_history[chat_key].append({"role": "user", "content": user_query})
-                try:
-                    client = OpenAI(api_key=st.session_state.api_key)
-                    messages = [
-                        {"role": "system", "content": f"다음은 문서 요약 내용입니다:\n{row['요약']}\n이 요약을 바탕으로 사용자의 질문에 답변하세요."},
-                        *st.session_state.document_chat_history[chat_key]
-                    ]
-                    response = client.chat.completions.create(
-                        model="gpt-4-1106-preview",
-                        messages=messages,
-                        temperature=0.4
-                    )
-                    reply = response.choices[0].message.content.strip()
-                    st.session_state.document_chat_history[chat_key].append({"role": "assistant", "content": reply})
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"❌ GPT 오류: {e}")
-
-            # ✅ 임베딩 보기 버튼
             if row.get("임베딩"):
                 if st.button("🔎 임베딩 값 보기", key=f"embedding_btn_{idx}"):
                     st.json(row["임베딩"], expanded=False)
 
-            # ✅ 삭제
             col1, col2 = st.columns([3, 1])
             with col1:
                 delete_input = st.text_input(
