@@ -17,6 +17,9 @@ if 'documents' not in st.session_state:
         "제목", "파일명", "업로더", "등록일", "파일데이터", "요약", "임베딩"
     ])
 
+if "document_chat_history" not in st.session_state:
+    st.session_state.document_chat_history = {}
+
 # ✅ 홈에서 입력된 API 키 사용 (chat.py와 동일하게 연동됨)
 if "api_key" not in st.session_state or not st.session_state.api_key:
     st.error("❌ 홈 화면에서 OpenAI API 키를 먼저 입력해 주세요.")
@@ -148,11 +151,42 @@ else:
                 st.markdown("**📌 요약 내용:**")
                 st.info(row["요약"])
 
-            # ✅ 임베딩 보기 버튼 추가 (중첩 오류 방지: 조건문으로 처리)
+            # ✅ 문서 기반 GPT 채팅 기능
+            st.markdown("**💬 문서 기반 채팅**")
+            chat_key = f"doc_chat_{idx}"
+            if chat_key not in st.session_state.document_chat_history:
+                st.session_state.document_chat_history[chat_key] = []
+
+            for msg in st.session_state.document_chat_history[chat_key]:
+                role = "user" if msg["role"] == "user" else "assistant"
+                st.chat_message(role).markdown(msg["content"])
+
+            user_query = st.chat_input("문서에 대해 질문하세요", key=f"chat_input_{idx}")
+            if user_query:
+                st.session_state.document_chat_history[chat_key].append({"role": "user", "content": user_query})
+                try:
+                    client = OpenAI(api_key=st.session_state.api_key)
+                    messages = [
+                        {"role": "system", "content": f"다음은 문서 요약 내용입니다:\n{row['요약']}\n이 요약을 바탕으로 사용자의 질문에 답변하세요."},
+                        *st.session_state.document_chat_history[chat_key]
+                    ]
+                    response = client.chat.completions.create(
+                        model="gpt-4-1106-preview",
+                        messages=messages,
+                        temperature=0.4
+                    )
+                    reply = response.choices[0].message.content.strip()
+                    st.session_state.document_chat_history[chat_key].append({"role": "assistant", "content": reply})
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"❌ GPT 오류: {e}")
+
+            # ✅ 임베딩 보기 버튼
             if row.get("임베딩"):
                 if st.button("🔎 임베딩 값 보기", key=f"embedding_btn_{idx}"):
                     st.json(row["임베딩"], expanded=False)
 
+            # ✅ 삭제
             col1, col2 = st.columns([3, 1])
             with col1:
                 delete_input = st.text_input(
