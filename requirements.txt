@@ -2,5 +2,5 @@ openai
 streamlit
 plotly
 pandas
-firebase-admin
 pymupdf
+scikit-learn
