@@ -64,15 +64,11 @@ if "selected_chat_target" not in st.session_state:
         </div>
         """
 
-        if st.markdown(f"<div onclick=\"document.getElementById('{name}_form').submit()\" style='cursor: pointer;'>{button_html}</div>", unsafe_allow_html=True):
-    pass
+        if st.button(f"🗨️ {name}", key=name, use_container_width=True):
+            st.session_state.selected_chat_target = name
+            st.rerun()
 
-form = st.form(key=f"{name}_form")
-with form:
-    submitted = form.form_submit_button(label=f"", use_container_width=True)
-    if submitted:
-        st.session_state.selected_chat_target = name
-        st.rerun()
+        st.markdown(button_html, unsafe_allow_html=True)
 else:
     # 2단계: 채팅창 UI
     selected_bot = st.session_state.selected_chat_target
