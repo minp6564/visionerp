@@ -3,24 +3,26 @@ import pandas as pd
 import re
 from datetime import datetime
 from zoneinfo import ZoneInfo
+from openai import OpenAI
 from data import dummy_data_management as dummy  # ✅ 직원 데이터 불러오기
+import fitz  # PyMuPDF
 
 # 문서 목록 초기화 및 더미 데이터 추가
 if 'documents' not in st.session_state:
-    st.session_state.documents = pd.DataFrame(columns=["제목", "파일명", "업로더", "등록일", "파일데이터"])
+    st.session_state.documents = pd.DataFrame(columns=[
+        "제목", "파일명", "업로더", "등록일", "파일데이터", "요약"
+    ])
 
-if st.session_state.documents.empty:
-    now_kst = datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d %H:%M")
-    dummy_docs = [
-        {"제목": "ERP_프로젝트_기획서", "파일명": "ERP_기획서.pdf", "업로더": "민승기", "등록일": now_kst, "파일데이터": b"Dummy PDF content"},
-        {"제목": "재고관리_매뉴얼", "파일명": "재고매뉴얼.docx", "업로더": "정하람", "등록일": now_kst, "파일데이터": b"Dummy DOCX content"},
-        {"제목": "판매_통계", "파일명": "판매통계.xlsx", "업로더": "한나영", "등록일": now_kst, "파일데이터": b"Dummy XLSX content"},
-        {"제목": "프로젝트_일정", "파일명": "일정_표.png", "업로더": "정유현", "등록일": now_kst, "파일데이터": b"Dummy PNG content"},
-        {"제목": "고객_리스트", "파일명": "고객명단.txt", "업로더": "김승현", "등록일": now_kst, "파일데이터": b"Dummy TXT content"},
-    ]
-    st.session_state.documents = pd.DataFrame(dummy_docs)
+# API 키 입력
+if "api_key" not in st.session_state:
+    st.session_state.api_key = ""
+st.session_state.api_key = st.text_input("🔑 OpenAI API Key", type="password", value=st.session_state.api_key)
 
-# 버전 있는 파일명 생성
+if not st.session_state.api_key:
+    st.warning("📌 먼저 OpenAI API Key를 입력하세요.")
+    st.stop()
+
+# 버전 있는 파일명 생성 함수
 def get_versioned_filename(filename):
     name, ext = re.match(r"(.+?)(\.[^.]+)?$", filename).groups()
     ext = ext or ""
@@ -32,6 +34,31 @@ def get_versioned_filename(filename):
     new_version = max(versions) + 1 if versions else None
     return filename if new_version is None else f"{name}_v{new_version}{ext}"
 
+# GPT 요약 함수
+@st.cache_data(show_spinner=False)
+def summarize_text_with_gpt(text):
+    try:
+        client = OpenAI(api_key=st.session_state.api_key)
+        response = client.chat.completions.create(
+            model="gpt-4-1106-preview",
+            messages=[
+                {"role": "system", "content": "당신은 ERP 기업 문서 요약 도우미입니다. 문서 내용을 간결하게 요약하세요."},
+                {"role": "user", "content": text[:6000]}
+            ],
+            temperature=0.3
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        return f"요약 실패: {e}"
+
+# PDF → 텍스트 추출
+def extract_text_from_pdf(file_bytes):
+    try:
+        pdf = fitz.open(stream=file_bytes, filetype="pdf")
+        return "\n".join(page.get_text() for page in pdf)
+    except Exception as e:
+        return ""
+
 # 타이틀
 st.set_page_config(page_title="문서 관리", layout="wide")
 st.title("📚 문서 등록 및 공유")
@@ -41,11 +68,8 @@ with st.form("upload_form"):
     st.subheader("📤 문서 업로드")
     uploaded_file = st.file_uploader("파일 선택", type=["pdf", "docx", "xlsx", "png", "jpg", "txt"])
     title = st.text_input("문서 제목", value=uploaded_file.name if uploaded_file else "")
-
-    # ✅ 업로더를 선택 형식으로 변경
     uploader_names = dummy.employees_df["name"].tolist()
     uploader = st.selectbox("담당자 선택", uploader_names)
-
     submitted = st.form_submit_button("업로드")
 
     if submitted:
@@ -54,17 +78,26 @@ with st.form("upload_form"):
         else:
             filename = get_versioned_filename(uploaded_file.name)
             now_kst = datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d %H:%M")
+            file_bytes = uploaded_file.getvalue()
+
+            if filename.lower().endswith(".pdf"):
+                text = extract_text_from_pdf(file_bytes)
+                summary = summarize_text_with_gpt(text)
+            else:
+                summary = "(요약은 PDF 문서만 지원됩니다)"
+
             new_doc = pd.DataFrame([{
                 "제목": title,
                 "파일명": filename,
                 "업로더": uploader,
                 "등록일": now_kst,
-                "파일데이터": uploaded_file.getvalue()
+                "파일데이터": file_bytes,
+                "요약": summary
             }])
             st.session_state.documents = pd.concat([st.session_state.documents, new_doc], ignore_index=True)
-            st.success(f"✅ 문서 업로드 완료: {filename}")
+            st.success(f"✅ 문서 업로드 및 요약 완료: {filename}")
 
-# 문서 검색/정렬
+# 문서 목록 검색/정렬
 st.subheader("🔍 문서 목록")
 col1, col2 = st.columns(2)
 with col1:
@@ -82,10 +115,10 @@ if search:
         lambda r: search.lower() in r["제목"].lower() or search.lower() in r["업로더"].lower(),
         axis=1
     )]
-
 if ext_filter != "전체":
     docs = docs[docs["파일명"].str.lower().str.endswith(ext_filter)]
 
+# 정렬 적용
 docs = docs.sort_values(by=sort_by, ascending=(sort_order == "오름차순")).reset_index(drop=True)
 
 # 출력
@@ -94,32 +127,34 @@ if docs.empty:
     st.info("등록된 문서가 없습니다.")
 else:
     for idx, row in docs.iterrows():
-        st.write(f"📄 **{row['제목']}**")
-        st.caption(f"업로더: {row['업로더']} | 등록일: {row['등록일']}")
-        st.download_button(
-            "⬇️ 다운로드",
-            data=row["파일데이터"],
-            file_name=row["파일명"],
-            mime="application/octet-stream",
-            key=f"download_{idx}"
-        )
-
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            delete_input = st.text_input(
-                f"'{row['제목']}' 삭제 확인용 입력",
-                key=f"delete_input_{idx}",
-                label_visibility="collapsed",
-                placeholder="삭제"
+        with st.expander(f"📄 {row['제목']}"):
+            st.caption(f"업로더: {row['업로더']} | 등록일: {row['등록일']}")
+            st.download_button(
+                "⬇️ 다운로드",
+                data=row["파일데이터"],
+                file_name=row["파일명"],
+                mime="application/octet-stream",
+                key=f"download_{idx}"
             )
-        with col2:
-            if st.button("🗑️ 삭제", key=f"delete_btn_{idx}"):
-                if delete_input.strip() == "삭제":
-                    st.session_state.documents.drop(index=idx, inplace=True)
-                    st.session_state.documents.reset_index(drop=True, inplace=True)
-                    st.success(f"✅ '{row['제목']}' 문서가 삭제되었습니다.")
-                    st.experimental_rerun()
-                else:
-                    st.warning("❗ 삭제하려면 '삭제'라고 입력해 주세요.")
+            if row.get("요약"):
+                st.markdown("**📌 요약 내용:**")
+                st.info(row["요약"])
 
-        st.markdown("---")
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                delete_input = st.text_input(
+                    f"'{row['제목']}' 삭제 확인용 입력",
+                    key=f"delete_input_{idx}",
+                    label_visibility="collapsed",
+                    placeholder="삭제"
+                )
+            with col2:
+                if st.button("🗑️ 삭제", key=f"delete_btn_{idx}"):
+                    if delete_input.strip() == "삭제":
+                        st.session_state.documents.drop(index=idx, inplace=True)
+                        st.session_state.documents.reset_index(drop=True, inplace=True)
+                        st.success(f"✅ '{row['제목']}' 문서가 삭제되었습니다.")
+                        st.experimental_rerun()
+                    else:
+                        st.warning("❗ 삭제하려면 '삭제'라고 입력해 주세요.")
+            st.markdown("---")
