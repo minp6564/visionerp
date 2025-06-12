@@ -71,14 +71,13 @@ if "selected_chat_target" not in st.session_state:
             }});
             </script>
         """
-        st.markdown(js, unsafe_allow_html=True)
+        
 
-        form = st.form(key=f"form_{block_key}")
-        with form:
-            submitted = st.form_submit_button(label="", use_container_width=True)
-            if submitted:
-                st.session_state.selected_chat_target = name
-                st.rerun()
+        with st.container():
+        if st.button(label=f"{name} ({position}, {department})
+최근: {last_msg[:50]}", key=f"btn_{name}", use_container_width=True):
+            st.session_state.selected_chat_target = name
+            st.rerun()
             st.markdown(
                 f"""
                 <div id="{block_key}" style='border: 1px solid #ccc; border-radius: 8px; padding: 10px;
