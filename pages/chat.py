@@ -49,7 +49,7 @@ if "selected_chat_target" not in st.session_state:
         # 최근 메시지 찾기
         last_msg = next((chat["message"] for chat in reversed(st.session_state.chat_history)
                          if chat["sender"] in (name, current_user) and (chat.get("receiver") == name or chat.get("receiver") == current_user)), "메시지 없음")
-        if st.button(f"{name} - 최근: {last_msg[:30]}"):
+        if st.button(f"🗨️ {name} - 최근: {last_msg[:30]}", use_container_width=True):
             st.session_state.selected_chat_target = name
             st.rerun()
 else:
