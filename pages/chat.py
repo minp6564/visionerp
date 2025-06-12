@@ -81,7 +81,8 @@ for chat in st.session_state.chat_history:
 # 입력창
 with st.container():
     st.markdown("---")
-    user_input = st.chat_input("💬 메시지를 입력하세요")
+
+user_input = st.chat_input("💬 메시지를 입력하세요")
 
 if user_input and user_input.strip():
     now = datetime.datetime.now()
