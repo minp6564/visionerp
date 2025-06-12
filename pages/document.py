@@ -148,10 +148,10 @@ else:
                 st.markdown("**📌 요약 내용:**")
                 st.info(row["요약"])
 
-            # ✅ 임베딩 보기 버튼 추가
+            # ✅ 임베딩 보기 버튼 추가 (중첩 오류 방지: 조건문으로 처리)
             if row.get("임베딩"):
-                with st.expander("🔎 임베딩 값 보기"):
-                    st.json(row["임베딩"])
+                if st.button("🔎 임베딩 값 보기", key=f"embedding_btn_{idx}"):
+                    st.json(row["임베딩"], expanded=False)
 
             col1, col2 = st.columns([3, 1])
             with col1:
@@ -166,7 +166,7 @@ else:
                     if delete_input.strip() == "삭제":
                         st.session_state.documents = st.session_state.documents.drop(index=idx).reset_index(drop=True)
                         st.success(f"✅ '{row['제목']}' 문서가 삭제되었습니다.")
-                        st.stop()
+                        st.rerun()
                     else:
                         st.warning("❗ 삭제하려면 '삭제'라고 입력해 주세요.")
             st.markdown("---")
