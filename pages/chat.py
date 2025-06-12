@@ -81,9 +81,9 @@ for chat in st.session_state.chat_history:
 # 입력창
 with st.container():
     st.markdown("---")
-    user_input = st.text_input("💬 메시지를 입력하세요", key="message_input")
+    user_input = st.chat_input("💬 메시지를 입력하세요", key="message_input")
 
-if st.button("✅ 전송") and user_input.strip():
+if user_input and user_input.strip():
     now = datetime.datetime.now()
 
     # 유저 메시지 저장
