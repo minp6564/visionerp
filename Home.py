@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import datetime
 import plotly.express as px
+from data.dummy.py import inventory_logs
 
 # 📅 날짜
 today = datetime.date.today()
@@ -80,9 +81,31 @@ st.divider()
 # -----------------------------
 # 생산량 그래프
 # -----------------------------
-st.subheader("📈 최근 7일 생산량 추이")
-fig = px.bar(production_log, x='날짜', y='생산량', title='최근 생산량', labels={'생산량': '단위: 개'})
-st.plotly_chart(fig, use_container_width=True)
+df = inventory_logs.copy()
+df["날짜"] = pd.to_datetime(df["날짜"])
+df["월"] = df["날짜"].dt.to_period("M").astype(str)
+
+# 수익 계산: 출고 항목에서만
+df["수익"] = df.apply(
+    lambda r: (r["출고단가"] - r["입고단가"]) * r["수량"] if r["구분"] == "출고" else 0,
+    axis=1
+)
+monthly_profit = df.groupby("월")["수익"].sum().reset_index()
+
+# 시각화
+import plotly.express as px
+fig_profit = px.bar(
+    monthly_profit,
+    x="월", y="수익",
+    title="📈 월별 수익 추이",
+    labels={"수익": "수익 (원)"},
+    text="수익"
+)
+fig_profit.update_traces(texttemplate='%{text:.2s}', textposition='outside')
+fig_profit.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
+
+st.subheader("📈 월별 수익 추이")
+st.plotly_chart(fig_profit, use_container_width=True)
 
 # -----------------------------
 # 안내 및 TODO
