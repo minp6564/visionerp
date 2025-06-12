@@ -49,21 +49,7 @@ if "selected_chat_target" not in st.session_state:
         # 최근 메시지 찾기
         last_msg = next((chat["message"] for chat in reversed(st.session_state.chat_history)
                          if chat["sender"] in (name, current_user) and (chat.get("receiver") == name or chat.get("receiver") == current_user)), "메시지 없음")
-        st.markdown(
-            f"""
-            <div style='border: 1px solid #ccc; border-radius: 10px; padding: 15px; margin-bottom: 10px; cursor: pointer; width: 100%;' 
-                 onclick="window.location.reload()">
-                <form action="#" method="post">
-                    <button name="select_{name}" style='all: unset; width: 100%; display: block;'>
-                        <strong>{name}</strong><br>
-                        <span style='color: gray;'>최근: {last_msg[:50]}</span>
-                    </button>
-                </form>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-        if st.button(f"👉 {name} - 최근: {last_msg[:30]}", use_container_width=True):
+        if st.button(f"🗨️ {name} - 최근: {last_msg[:30]}", use_container_width=True):
             st.session_state.selected_chat_target = name
             st.rerun()
 else:
