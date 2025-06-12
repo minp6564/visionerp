@@ -55,14 +55,40 @@ if "selected_chat_target" not in st.session_state:
              (chat.get("receiver") == name or chat.get("receiver") == current_user)),
             "메시지 없음")
 
-        with st.form(key=f"form_{name}"):
-            submitted = st.form_submit_button(
-                label=f"{name} ({position}, {department})\n최근: {last_msg[:50]}",
-                use_container_width=True
-            )
+        # HTML 클릭 영역
+        block_key = f"click_{name}"
+        js = f"""
+            <script>
+            const el = window.parent || window;
+            document.addEventListener("DOMContentLoaded", function() {{
+                const box = document.getElementById("{block_key}");
+                if (box) {{
+                    box.onclick = function() {{
+                        const form = document.getElementById("form_{block_key}");
+                        form.requestSubmit();
+                    }}
+                }}
+            }});
+            </script>
+        """
+        st.markdown(js, unsafe_allow_html=True)
+
+        form = st.form(key=f"form_{block_key}")
+        with form:
+            submitted = st.form_submit_button(label="", use_container_width=True)
             if submitted:
                 st.session_state.selected_chat_target = name
                 st.rerun()
+            st.markdown(
+                f"""
+                <div id="{block_key}" style='border: 1px solid #ccc; border-radius: 8px; padding: 10px;
+                            margin-bottom: 10px; background-color: #f9f9f9; cursor: pointer;'>
+                    <div style='font-weight: bold;'>{name} ({position}, {department})</div>
+                    <div style='color: gray; margin-top: 5px;'>최근: {last_msg[:50]}</div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 else:
     # 2단계: 채팅창 UI
     selected_bot = st.session_state.selected_chat_target
