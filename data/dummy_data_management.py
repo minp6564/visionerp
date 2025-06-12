@@ -2,9 +2,9 @@ import pandas as pd
 from datetime import datetime, timedelta
 
 employees_df = pd.DataFrame([
-    {"id": 1, "name": "김승현", "position": "사원", "department": "전산", "join_date": "2023-01-10", "email": "hong@company.com"},
-    {"id": 2, "name": "민승기", "position": "대리", "department": "인사", "join_date": "2022-06-15", "email": "lee@company.com"},
-    {"id": 3, "name": "정하람", "position": "과장", "department": "마케팅", "join_date": "2021-03-01", "email": "kim@company.com"},
+    {"id": 1, "name": "김승현", "position": "사원", "department": "전산", "join_date": "2023-01-10", "email": "kimseung@company.com"},
+    {"id": 2, "name": "민승기", "position": "대리", "department": "인사", "join_date": "2022-06-15", "email": "mean@company.com"},
+    {"id": 3, "name": "정하람", "position": "과장", "department": "마케팅", "join_date": "2021-03-01", "email": "haram@company.com"},
     {"id": 4, "name": "정유현", "position": "차장", "department": "영업", "join_date": "2020-09-01", "email": "jung@company.com"},
     {"id": 5, "name": "한나영", "position": "사원", "department": "총무", "join_date": "2024-02-20", "email": "han@company.com"},
 ])
