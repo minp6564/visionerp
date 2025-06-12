@@ -93,7 +93,7 @@ else:
                     )
                     prompt += f"\n\n다음은 {bot_name}님이 업로드한 문서입니다. 필요 시 참고하세요:\n{doc_context}"
                 else:
-                    return f"해당 질문은 {bot_name}님이 업로드한 문서가 아니므로, 관련 내용을 알고 있는 담당자에게 문의해 주세요."
+                    return f"그건 제가 업로드 한 문서가 아니라 잘 모르겠습니다."
 
             client = OpenAI(api_key=st.session_state.api_key)
             response = client.chat.completions.create(
