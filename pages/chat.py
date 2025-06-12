@@ -55,9 +55,20 @@ if "selected_chat_target" not in st.session_state:
              (chat.get("receiver") == name or chat.get("receiver") == current_user)),
             "메시지 없음")
 
-        if st.button(f"🗨️ {name} ({position}, {department})", use_container_width=True):
+        button_html = f"""
+        <div style='border: 1px solid #ccc; border-radius: 8px; padding: 10px; margin-bottom: 10px; background-color: #f9f9f9;'>
+            <div style='display: flex; flex-direction: column;'>
+                <div style='font-weight: bold;'>{name} ({position}, {department})</div>
+                <div style='color: gray; margin-top: 5px;'>최근: {last_msg[:50]}</div>
+            </div>
+        </div>
+        """
+
+        if st.button(f"🗨️ {name}", key=name, use_container_width=True):
             st.session_state.selected_chat_target = name
             st.rerun()
+
+        st.markdown(button_html, unsafe_allow_html=True)
         st.markdown(f"<span style='color: gray; margin-left: 10px;'>최근: {last_msg[:50]}</span>", unsafe_allow_html=True)
 else:
     # 2단계: 채팅창 UI
