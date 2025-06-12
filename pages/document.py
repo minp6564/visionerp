@@ -4,8 +4,15 @@ import re
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from openai import OpenAI
-from data import dummy_data_management as dummy  # ✅ 직원 데이터 불러오기
+from data import dummy_data_management as dummy 
 import fitz  # PyMuPDF
+
+
+# 타이틀
+st.set_page_config(page_title="문서 관리", layout="wide")
+st.title("📚 문서 등록 및 공유")
+
+
 
 # 문서 목록 초기화 및 더미 데이터 추가
 if 'documents' not in st.session_state:
@@ -59,9 +66,6 @@ def extract_text_from_pdf(file_bytes):
     except Exception as e:
         return ""
 
-# 타이틀
-st.set_page_config(page_title="문서 관리", layout="wide")
-st.title("📚 문서 등록 및 공유")
 
 # 업로드 폼
 with st.form("upload_form"):
