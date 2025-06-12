@@ -79,21 +79,26 @@ with col4:
 st.divider()
 
 # -----------------------------
-# 생산량 그래프
+# 생산량 → 수익 추이로 대체
 # -----------------------------
 df = inventory_logs.copy()
 df["날짜"] = pd.to_datetime(df["날짜"])
 df["월"] = df["날짜"].dt.to_period("M").astype(str)
 
-# 수익 계산: 출고 항목에서만
+# 🔧 숫자형 변환 (빈칸 → 0)
+df["입고단가"] = pd.to_numeric(df["입고단가"], errors="coerce").fillna(0)
+df["출고단가"] = pd.to_numeric(df["출고단가"], errors="coerce").fillna(0)
+df["수량"] = pd.to_numeric(df["수량"], errors="coerce").fillna(0)
+
+# ✅ 수익 계산
 df["수익"] = df.apply(
     lambda r: (r["출고단가"] - r["입고단가"]) * r["수량"] if r["구분"] == "출고" else 0,
     axis=1
 )
+
 monthly_profit = df.groupby("월")["수익"].sum().reset_index()
 
-# 시각화
-import plotly.express as px
+# 📈 시각화
 fig_profit = px.bar(
     monthly_profit,
     x="월", y="수익",
@@ -106,6 +111,7 @@ fig_profit.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
 
 st.subheader("📈 월별 수익 추이")
 st.plotly_chart(fig_profit, use_container_width=True)
+
 
 # -----------------------------
 # 안내 및 TODO
