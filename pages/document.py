@@ -107,6 +107,14 @@ with st.form("upload_form", clear_on_submit=True):
         st.session_state.documents = pd.concat([st.session_state.documents, new_doc], ignore_index=True)
         st.success(f"✅ 문서 업로드 및 요약 완료: {filename}")
 
+# ✅ 필터링 설정
+col1, col2 = st.columns(2)
+with col1:
+    ext_filter = st.selectbox("확장자 필터", ["전체", "pdf", "docx", "xlsx", "png", "jpg", "txt"])
+with col2:
+    sort_by = st.selectbox("정렬 기준", ["등록일", "제목", "업로더"])
+sort_order = st.radio("정렬 순서", ["내림차순", "오름차순"], horizontal=True)
+
 # ✅ 문서 검색 수행
 filtered_docs = st.session_state.documents.copy()
 
@@ -130,6 +138,11 @@ if gpt_query:
         filtered_docs = filtered_docs.sort_values(by="유사도", ascending=False)
     except Exception as e:
         st.warning(f"GPT 검색 실패: {e}")
+
+if ext_filter != "전체":
+    filtered_docs = filtered_docs[filtered_docs["파일명"].str.lower().str.endswith(ext_filter)]
+
+filtered_docs = filtered_docs.sort_values(by=sort_by, ascending=(sort_order == "오름차순")).reset_index(drop=True)
 
 # ✅ 문서 목록 출력
 st.markdown(f"**총 문서 수: {len(filtered_docs)}개**")
