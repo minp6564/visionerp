@@ -46,12 +46,19 @@ if "selected_chat_target" not in st.session_state:
     st.subheader("대화할 직원 선택")
 
     for name in gpt_bots:
-        # 최근 메시지 찾기
-        last_msg = next((chat["message"] for chat in reversed(st.session_state.chat_history)
-                         if chat["sender"] in (name, current_user) and (chat.get("receiver") == name or chat.get("receiver") == current_user)), "메시지 없음")
-        if st.button(f"🗨️ {name} - 최근: {last_msg[:30]}", use_container_width=True):
+        row = gpt_bots_df[gpt_bots_df["name"] == name].iloc[0]
+        position = row['position']
+        department = row['department']
+        last_msg = next(
+            (chat["message"] for chat in reversed(st.session_state.chat_history)
+             if chat["sender"] in (name, current_user) and
+             (chat.get("receiver") == name or chat.get("receiver") == current_user)),
+            "메시지 없음")
+
+        if st.button(f"🗨️ {name} ({position}, {department})", use_container_width=True):
             st.session_state.selected_chat_target = name
             st.rerun()
+        st.markdown(f"<span style='color: gray; margin-left: 10px;'>최근: {last_msg[:50]}</span>", unsafe_allow_html=True)
 else:
     # 2단계: 채팅창 UI
     selected_bot = st.session_state.selected_chat_target
