@@ -3,6 +3,7 @@ import pandas as pd
 import re
 from datetime import datetime
 from zoneinfo import ZoneInfo
+from data import dummy_data_management as dummy  # ✅ 직원 데이터 불러오기
 
 # 문서 목록 초기화 및 더미 데이터 추가
 if 'documents' not in st.session_state:
@@ -40,7 +41,11 @@ with st.form("upload_form"):
     st.subheader("📤 문서 업로드")
     uploaded_file = st.file_uploader("파일 선택", type=["pdf", "docx", "xlsx", "png", "jpg", "txt"])
     title = st.text_input("문서 제목", value=uploaded_file.name if uploaded_file else "")
-    uploader = st.text_input("담당자 이름")
+
+    # ✅ 업로더를 선택 형식으로 변경
+    uploader_names = dummy.employees_df["name"].tolist()
+    uploader = st.selectbox("담당자 선택", uploader_names)
+
     submitted = st.form_submit_button("업로드")
 
     if submitted:
