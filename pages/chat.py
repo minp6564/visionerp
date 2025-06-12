@@ -46,12 +46,33 @@ if "selected_chat_target" not in st.session_state:
     st.subheader("대화할 직원 선택")
 
     for name in gpt_bots:
-        # 최근 메시지 찾기
-        last_msg = next((chat["message"] for chat in reversed(st.session_state.chat_history)
-                         if chat["sender"] in (name, current_user) and (chat.get("receiver") == name or chat.get("receiver") == current_user)), "메시지 없음")
-        if st.button(f"🗨️ {name} - 최근: {last_msg[:30]}", use_container_width=True):
-            st.session_state.selected_chat_target = name
-            st.rerun()
+        row = gpt_bots_df[gpt_bots_df["name"] == name].iloc[0]
+        position = row['position']
+        department = row['department']
+        last_msg = next(
+            (chat["message"] for chat in reversed(st.session_state.chat_history)
+             if chat["sender"] in (name, current_user) and
+             (chat.get("receiver") == name or chat.get("receiver") == current_user)),
+            "메시지 없음")
+
+        button_html = f"""
+        <button onclick="document.getElementById('{name}_form').submit()" style='border: none; background: none; padding: 0; width: 100%; text-align: left;'>
+            <div style='border: 1px solid #ccc; border-radius: 8px; padding: 10px; margin-bottom: 10px; background-color: #f9f9f9;'>
+                <div style='display: flex; flex-direction: column;'>
+                    <div style='font-weight: bold;'>{name} ({position}, {department})</div>
+                    <div style='color: gray; margin-top: 5px;'>최근: {last_msg[:50]}</div>
+                </div>
+            </div>
+        </button>
+        """
+
+        form = st.form(key=f"form_{name}")
+        with form:
+            form.form_submit_button(label='', on_click=lambda: st.session_state.update({"selected_chat_target": name}))
+        st.markdown(button_html, unsafe_allow_html=True)
+
+        st.markdown(button_html, unsafe_allow_html=True)
+        
 else:
     # 2단계: 채팅창 UI
     selected_bot = st.session_state.selected_chat_target
