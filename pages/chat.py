@@ -11,12 +11,9 @@ employees_df = dummy.employees_df
 
 # ✅ GPT 봇 후보로 등록 (이사원은 제외)
 gpt_bots_df = employees_df[employees_df["name"] != current_user]
-
-# 봇 이름 목록
 gpt_bots = gpt_bots_df["name"].tolist()
 
-# GPT system prompt 자동 생성
-# system_prompt 생성 시 employees_df 전체를 추가
+# ✅ GPT system prompt 생성 함수
 def generate_prompt(row):
     employee_list = "\n".join(
         f"{r['name']} ({r['position']}, {r['department']}, {r['email']})"
@@ -28,6 +25,7 @@ ERP 시스템에서 사용자와 대화하며 업무를 지원합니다.
 {employee_list}
 답변은 직책에 맞는 말투로 하세요."""
 
+# ✅ 봇 프롬프트 딕셔너리
 bot_prompts = {
     row["name"]: generate_prompt(row) for _, row in gpt_bots_df.iterrows()
 }
@@ -62,7 +60,7 @@ def generate_gpt_reply(bot_name, user_input):
     except Exception as e:
         return f"(GPT 오류: {e})"
 
-# ✅ UI
+# ✅ UI 렌더링
 st.set_page_config(page_title="GPT 채팅", layout="wide")
 st.title("💬 사내 GPT 채팅")
 
@@ -72,13 +70,13 @@ st.session_state.selected_bot = selected_bot
 st.divider()
 st.subheader(f"🗨️ {selected_bot} 님과의 대화")
 
-# 대화 내용
+# 대화 출력
 for chat in st.session_state.chat_history:
     with st.chat_message("user" if chat["sender"] == current_user else "assistant"):
         st.markdown(f"**{chat['sender']}**: {chat['message']}")
         st.caption(chat["timestamp"].strftime("%Y-%m-%d %H:%M:%S"))
 
-
+# ✅ 입력창 (하단 고정, Enter로 전송)
 user_input = st.chat_input("💬 메시지를 입력하세요")
 
 if user_input and user_input.strip():
