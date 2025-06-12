@@ -77,6 +77,15 @@ else:
     def generate_gpt_reply(bot_name, user_input):
         try:
             prompt = bot_prompts.get(bot_name, "당신은 회사 직원입니다.")
+
+            # 🔹 문서 요약 삽입
+            if "document_knowledge" in st.session_state and st.session_state.document_knowledge:
+                doc_context = "\n\n".join(
+                    f"[{doc['제목']} 요약]: {doc['요약']}\n[본문]: {doc['전체텍스트'][:1000]}"
+                    for doc in st.session_state.document_knowledge
+                )
+                prompt += f"\n\n다음은 회사 문서 내용입니다. 필요 시 참고하세요:\n{doc_context}"
+
             client = OpenAI(api_key=st.session_state.api_key)
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
@@ -85,7 +94,7 @@ else:
                     {"role": "user", "content": user_input}
                 ],
                 temperature=0.7,
-                max_tokens=300
+                max_tokens=500
             )
             return response.choices[0].message.content.strip()
         except Exception as e:
