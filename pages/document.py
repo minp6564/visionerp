@@ -103,6 +103,7 @@ with st.form("upload_form", clear_on_submit=True):
             }])
             st.session_state.documents = pd.concat([st.session_state.documents, new_doc], ignore_index=True)
             st.success(f"✅ 문서 업로드 및 요약 완료: {filename}")
+            uploaded_file = None
 
 # 문서 목록 검색/정렬
 st.subheader("🔍 문서 목록")
@@ -146,6 +147,11 @@ else:
             if row.get("요약"):
                 st.markdown("**📌 요약 내용:**")
                 st.info(row["요약"])
+
+            # ✅ 임베딩 보기 버튼 추가
+            if row.get("임베딩"):
+                with st.expander("🔎 임베딩 값 보기"):
+                    st.json(row["임베딩"])
 
             col1, col2 = st.columns([3, 1])
             with col1:
