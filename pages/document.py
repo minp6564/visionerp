@@ -99,13 +99,14 @@ with st.form("upload_form", clear_on_submit=True):
         }])
         st.session_state.documents = pd.concat([st.session_state.documents, new_doc], ignore_index=True)
         st.success(f"✅ 문서 업로드 및 요약 완료: {filename}")
+
 # ✅ 검색 입력
 col1, col2 = st.columns(2)
 with col1:
     search = st.text_input("문서 제목 또는 담당자 검색")
 with col2:
     gpt_query = st.text_input("💡 GPT 기반 문서 검색어 입력")
-  
+
 # ✅ 필터링 설정
 col1, col2 = st.columns(2)
 with col1:
@@ -137,11 +138,10 @@ if gpt_query:
         filtered_docs = filtered_docs.sort_values(by="유사도", ascending=False)
     except Exception as e:
         st.warning(f"GPT 검색 실패: {e}")
-
-if ext_filter != "전체":
-    filtered_docs = filtered_docs[filtered_docs["파일명"].str.lower().str.endswith(ext_filter)]
-
-filtered_docs = filtered_docs.sort_values(by=sort_by, ascending=(sort_order == "오름차순")).reset_index(drop=True)
+else:
+    if ext_filter != "전체":
+        filtered_docs = filtered_docs[filtered_docs["파일명"].str.lower().str.endswith(ext_filter)]
+    filtered_docs = filtered_docs.sort_values(by=sort_by, ascending=(sort_order == "오름차순")).reset_index(drop=True)
 
 # ✅ 문서 목록 출력
 st.markdown(f"**총 문서 수: {len(filtered_docs)}개**")
