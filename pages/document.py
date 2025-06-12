@@ -69,13 +69,6 @@ def extract_text_from_pdf(file_bytes):
 # ✅ 타이틀
 st.title("📚 문서 등록 및 공유")
 
-# ✅ 검색 입력
-col1, col2 = st.columns(2)
-with col1:
-    search = st.text_input("문서 제목 또는 담당자 검색")
-with col2:
-    gpt_query = st.text_input("💡 GPT 기반 문서 검색어 입력")
-
 # ✅ 문서 업로드 폼
 with st.form("upload_form", clear_on_submit=True):
     st.subheader("📤 문서 업로드")
@@ -106,7 +99,13 @@ with st.form("upload_form", clear_on_submit=True):
         }])
         st.session_state.documents = pd.concat([st.session_state.documents, new_doc], ignore_index=True)
         st.success(f"✅ 문서 업로드 및 요약 완료: {filename}")
-
+# ✅ 검색 입력
+col1, col2 = st.columns(2)
+with col1:
+    search = st.text_input("문서 제목 또는 담당자 검색")
+with col2:
+    gpt_query = st.text_input("💡 GPT 기반 문서 검색어 입력")
+  
 # ✅ 필터링 설정
 col1, col2 = st.columns(2)
 with col1:
