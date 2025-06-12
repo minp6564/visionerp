@@ -66,7 +66,10 @@ if "selected_chat_target" not in st.session_state:
                 st.rerun()
 else:
     # 2단계: 채팅창 UI
-    selected_bot = st.session_state.selected_chat_target
+    row = gpt_bots_df[gpt_bots_df["name"] == selected_bot].iloc[0]
+    position = row["position"]
+    department = row["department"]
+    st.subheader(f"🗨️ {selected_bot} ({position}, {department}) 님과의 대화")
 
     # GPT 응답 함수
     def generate_gpt_reply(bot_name, user_input):
