@@ -42,14 +42,14 @@ if "chat_history" not in st.session_state:
 if "selected_chat_target" not in st.session_state:
     # 1단계: 사용자 목록 UI
     st.set_page_config(page_title="GPT 채팅", layout="wide")
-    st.title("💬 사내 GPT 채팅")
-    st.subheader("📋 대화할 GPT 직원 선택")
+    st.title("💬 사내 채팅")
+    st.subheader("대화할 직원 선택")
 
     for name in gpt_bots:
         # 최근 메시지 찾기
         last_msg = next((chat["message"] for chat in reversed(st.session_state.chat_history)
                          if chat["sender"] in (name, current_user) and (chat.get("receiver") == name or chat.get("receiver") == current_user)), "메시지 없음")
-        if st.button(f"👤 {name} - 최근: {last_msg[:30]}"):
+        if st.button(f"{name} - 최근: {last_msg[:30]}"):
             st.session_state.selected_chat_target = name
             st.rerun()
 else:
@@ -72,10 +72,10 @@ else:
             )
             return response.choices[0].message.content.strip()
         except Exception as e:
-            return f"(GPT 오류: {e})"
+            return f"(오류: {e})"
 
     st.set_page_config(page_title="GPT 채팅", layout="wide")
-    st.title("💬 사내 GPT 채팅")
+    st.title("💬 사내 채팅")
     st.subheader(f"🗨️ {selected_bot} 님과의 대화")
 
     if st.button("← 직원 목록으로 돌아가기"):
@@ -104,7 +104,7 @@ else:
             )
 
     # 입력창 (하단 고정, Enter로 전송)
-    user_input = st.chat_input("💬 메시지를 입력하세요")
+    user_input = st.chat_input("메시지를 입력하세요")
 
     if user_input and user_input.strip():
         now = datetime.datetime.now()
