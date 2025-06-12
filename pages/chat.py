@@ -78,9 +78,6 @@ for chat in st.session_state.chat_history:
         st.markdown(f"**{chat['sender']}**: {chat['message']}")
         st.caption(chat["timestamp"].strftime("%Y-%m-%d %H:%M:%S"))
 
-# 입력창
-with st.container():
-    st.markdown("---")
 
 user_input = st.chat_input("💬 메시지를 입력하세요")
 
