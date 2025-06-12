@@ -56,20 +56,23 @@ if "selected_chat_target" not in st.session_state:
             "메시지 없음")
 
         button_html = f"""
-        <div style='border: 1px solid #ccc; border-radius: 8px; padding: 10px; margin-bottom: 10px; background-color: #f9f9f9;'>
-            <div style='display: flex; flex-direction: column;'>
-                <div style='font-weight: bold;'>{name} ({position}, {department})</div>
-                <div style='color: gray; margin-top: 5px;'>최근: {last_msg[:50]}</div>
+        <button onclick="document.getElementById('{name}_form').submit()" style='border: none; background: none; padding: 0; width: 100%; text-align: left;'>
+            <div style='border: 1px solid #ccc; border-radius: 8px; padding: 10px; margin-bottom: 10px; background-color: #f9f9f9;'>
+                <div style='display: flex; flex-direction: column;'>
+                    <div style='font-weight: bold;'>{name} ({position}, {department})</div>
+                    <div style='color: gray; margin-top: 5px;'>최근: {last_msg[:50]}</div>
+                </div>
             </div>
-        </div>
+        </button>
         """
 
-        if st.button(f"🗨️ {name}", key=name, use_container_width=True):
-            st.session_state.selected_chat_target = name
-            st.rerun()
+        form = st.form(key=f"form_{name}")
+        with form:
+            form.form_submit_button(label='', on_click=lambda: st.session_state.update({"selected_chat_target": name}))
+        st.markdown(button_html, unsafe_allow_html=True)
 
         st.markdown(button_html, unsafe_allow_html=True)
-        st.markdown(f"<span style='color: gray; margin-left: 10px;'>최근: {last_msg[:50]}</span>", unsafe_allow_html=True)
+        
 else:
     # 2단계: 채팅창 UI
     selected_bot = st.session_state.selected_chat_target
