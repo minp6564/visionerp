@@ -46,27 +46,53 @@ if "selected_chat_target" not in st.session_state:
     st.subheader("대화할 직원 선택")
 
     for name in gpt_bots:
-        row = gpt_bots_df[gpt_bots_df["name"] == name].iloc[0]
-        position = row['position']
-        department = row['department']
-        last_msg = next(
-            (chat["message"] for chat in reversed(st.session_state.chat_history)
-             if chat["sender"] in (name, current_user) and
-             (chat.get("receiver") == name or chat.get("receiver") == current_user)),
-            "메시지 없음")
+    row = gpt_bots_df[gpt_bots_df["name"] == name].iloc[0]
+    position = row['position']
+    department = row['department']
+    last_msg = next(
+        (chat["message"] for chat in reversed(st.session_state.chat_history)
+         if chat["sender"] in (name, current_user) and
+         (chat.get("receiver") == name or chat.get("receiver") == current_user)),
+        "메시지 없음")
 
-        button_html = f"""
-        <div style='border: 1px solid #ccc; border-radius: 8px; padding: 10px; margin-bottom: 10px; background-color: #f9f9f9;'>
-            <div style='display: flex; flex-direction: column;'>
+    target_key = f"target_{name}"
+    # 감지용 클릭 상태 변수
+    if target_key not in st.session_state:
+        st.session_state[target_key] = False
+
+    # 클릭 가능한 영역
+    container = st.container()
+    with container:
+        clicked = st.markdown(
+            f"""
+            <div onclick="document.dispatchEvent(new CustomEvent('{target_key}'))"
+                 style='cursor: pointer; border: 1px solid #ccc; border-radius: 8px; padding: 10px; margin-bottom: 10px; background-color: #f9f9f9;'>
                 <div style='font-weight: bold;'>{name} ({position}, {department})</div>
                 <div style='color: gray; margin-top: 5px;'>최근: {last_msg[:50]}</div>
             </div>
-        </div>
-        """
+            <script>
+                const el = window.parent || window;
+                el.addEventListener("{target_key}", () => {{
+                    fetch("/", {{
+                        method: "POST",
+                        headers: {{
+                            "Content-Type": "application/json"
+                        }},
+                        body: JSON.stringify({{"target": "{name}"}})
+                    }}).then(() => {{
+                        el.location.reload();
+                    }});
+                }});
+            </script>
+            """,
+            unsafe_allow_html=True
+        )
 
-        if st.button(f"🗨️ {name}", key=name, use_container_width=True):
-            st.session_state.selected_chat_target = name
-            st.rerun()
+    # Streamlit backend에서 타깃 설정
+    if st.experimental_get_query_params().get("target", [None])[0] == name:
+        st.session_state.selected_chat_target = name
+        st.rerun()
+
 
         st.markdown(button_html, unsafe_allow_html=True)
 else:
