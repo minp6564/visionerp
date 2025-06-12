@@ -84,7 +84,16 @@ else:
                     f"[{doc['제목']} 요약]: {doc['요약']}\n[본문]: {doc['전체텍스트'][:1000]}"
                     for doc in st.session_state.document_knowledge
                 )
-                prompt += f"\n\n다음은 회사 문서 내용입니다. 필요 시 참고하세요:\n{doc_context}"
+                # 🔸 유저 질문이 문서 관련일 경우, 업로더인지 확인
+                matched_docs = [doc for doc in st.session_state.document_knowledge if doc['업로더'] == bot_name]
+                if matched_docs:
+                    doc_context = "\n\n".join(
+                        f"[{doc['제목']} 요약]: {doc['요약']}\n[본문]: {doc['전체텍스트'][:1000]}"
+                        for doc in matched_docs
+                    )
+                    prompt += f"\n\n다음은 {bot_name}님이 업로드한 문서입니다. 필요 시 참고하세요:\n{doc_context}"
+                else:
+                    return f"해당 질문은 {bot_name}님이 업로드한 문서가 아니므로, 관련 내용을 알고 있는 담당자에게 문의해 주세요."
 
             client = OpenAI(api_key=st.session_state.api_key)
             response = client.chat.completions.create(
