@@ -4,15 +4,11 @@ import re
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from openai import OpenAI
-from data import dummy_data_management as dummy 
+from data import dummy_data_management as dummy  # ✅ 직원 데이터 불러오기
 import fitz  # PyMuPDF
 
-
-# 타이틀
+# ✅ 가장 먼저 페이지 설정
 st.set_page_config(page_title="문서 관리", layout="wide")
-st.title("📚 문서 등록 및 공유")
-
-
 
 # 문서 목록 초기화 및 더미 데이터 추가
 if 'documents' not in st.session_state:
@@ -20,13 +16,9 @@ if 'documents' not in st.session_state:
         "제목", "파일명", "업로더", "등록일", "파일데이터", "요약"
     ])
 
-# API 키 입력
-if "api_key" not in st.session_state:
-    st.session_state.api_key = ""
-st.session_state.api_key = st.text_input("🔑 OpenAI API Key", type="password", value=st.session_state.api_key)
-
-if not st.session_state.api_key:
-    st.warning("📌 먼저 OpenAI API Key를 입력하세요.")
+# ✅ 홈에서 입력된 API 키 사용 (chat.py와 동일하게 연동됨)
+if "api_key" not in st.session_state or not st.session_state.api_key:
+    st.error("❌ 홈 화면에서 OpenAI API 키를 먼저 입력해 주세요.")
     st.stop()
 
 # 버전 있는 파일명 생성 함수
@@ -66,8 +58,9 @@ def extract_text_from_pdf(file_bytes):
     except Exception as e:
         return ""
 
+# 타이틀 및 업로드 폼
+st.title("📚 문서 등록 및 공유")
 
-# 업로드 폼
 with st.form("upload_form"):
     st.subheader("📤 문서 업로드")
     uploaded_file = st.file_uploader("파일 선택", type=["pdf", "docx", "xlsx", "png", "jpg", "txt"])
