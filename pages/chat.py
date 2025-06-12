@@ -66,10 +66,12 @@ if "selected_chat_target" not in st.session_state:
                 st.rerun()
 else:
     # 2단계: 채팅창 UI
+    selected_bot = st.session_state.selected_chat_target
+
+    # 🔄 선택한 봇 정보 추출
     row = gpt_bots_df[gpt_bots_df["name"] == selected_bot].iloc[0]
     position = row["position"]
     department = row["department"]
-    st.subheader(f"🗨️ {selected_bot} ({position}, {department}) 님과의 대화")
 
     # GPT 응답 함수
     def generate_gpt_reply(bot_name, user_input):
@@ -91,7 +93,7 @@ else:
 
     st.set_page_config(page_title="GPT 채팅", layout="wide")
     st.title("💬 사내 채팅")
-    st.subheader(f"🗨️ {selected_bot} 님과의 대화")
+    st.subheader(f"🗨️ {selected_bot} ({position}, {department}) 님과의 대화")
 
     if st.button("← 직원 목록으로 돌아가기"):
         del st.session_state.selected_chat_target
