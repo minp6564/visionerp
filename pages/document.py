@@ -157,10 +157,9 @@ else:
             with col2:
                 if st.button("🗑️ 삭제", key=f"delete_btn_{idx}"):
                     if delete_input.strip() == "삭제":
-                        st.session_state.documents.drop(index=idx, inplace=True)
-                        st.session_state.documents.reset_index(drop=True, inplace=True)
+                        st.session_state.documents = st.session_state.documents.drop(index=idx).reset_index(drop=True)
                         st.success(f"✅ '{row['제목']}' 문서가 삭제되었습니다.")
-                        st.experimental_rerun()
+                        st.stop()
                     else:
                         st.warning("❗ 삭제하려면 '삭제'라고 입력해 주세요.")
             st.markdown("---")
