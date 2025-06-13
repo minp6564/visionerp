@@ -133,12 +133,19 @@ elif menu == "직원 수정":
 
     if selected_id:
         employee = df[df["id"] == selected_id].iloc[0]
+
+        # ✅ 실제 데이터와 맞춰 부서 목록 구성
+        department_options = ["경영팀", "회계팀", "인사팀", "영업팀", "전산팀", "마케팅팀"]
+        position_options = ["사원", "대리", "과장", "차장", "부장", "임원"]
+
         with st.form("edit_form"):
             name = st.text_input("이름", value=employee["name"])
-            position = st.selectbox("직급", ["사원", "대리", "과장", "차장", "부장", "임원"], index=["사원", "대리", "과장", "차장", "부장", "임원"].index(employee["position"]))
-            department = st.selectbox("부서", ["경영", "회계", "인사", "영업", "전산", "마케팅"], index=["경영", "회계", "인사", "영업", "전산", "마케팅"].index(employee["department"]))
+            position = st.selectbox("직급", position_options, index=position_options.index(employee["position"]))
+            department = st.selectbox("부서", department_options, index=department_options.index(employee["department"]))
             join_date = st.date_input("입사일", value=datetime.fromisoformat(employee["join_date"]))
             email = st.text_input("이메일", value=employee["email"])
+            
+            # ✅ 반드시 submit 버튼 필요
             updated = st.form_submit_button("수정 완료")
 
             if updated:
