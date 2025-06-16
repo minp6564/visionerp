@@ -49,10 +49,12 @@ def summarize_and_embed_with_gpt(text):
             temperature=0.3
         )
         summary = summary_resp.choices[0].message.content.strip()
+        embedding_input = f"{title}\n\n{text[:8000]}"  # 제목 + 본문 앞부분
         emb_resp = client.embeddings.create(
             model="text-embedding-3-small",
-            input=text[:8191]
+            input=embedding_input
         )
+
         embedding = emb_resp.data[0].embedding
         return summary, embedding
     except Exception as e:
