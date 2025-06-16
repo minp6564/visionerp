@@ -97,7 +97,7 @@ else:
 
             client = OpenAI(api_key=st.session_state.api_key)
             response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model="gpt-4.1-mini",
                 messages=[
                     {"role": "system", "content": prompt},
                     {"role": "user", "content": user_input}
