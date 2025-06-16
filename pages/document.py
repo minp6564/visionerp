@@ -19,7 +19,7 @@ if "api_key" not in st.session_state or not st.session_state.api_key:
 # ✅ 문서 데이터프레임 초기화
 if 'documents' not in st.session_state:
     st.session_state.documents = pd.DataFrame(columns=[
-        "제목", "파일명", "업로더", "등록일", "파일데이터", "요약", "임베딩"
+        "제목", "파일명", "업로더", "등록일", "파일데이터", "요약", "임베딩", "본문"
     ])
 
 # ✅ 버전 있는 파일명 생성
@@ -89,6 +89,7 @@ with st.form("upload_form", clear_on_submit=True):
             summary, embedding = summarize_and_embed_with_gpt(title, text)
         else:
             summary, embedding = "(요약은 PDF 문서만 지원됩니다)", []
+            text = ""
 
         new_doc = pd.DataFrame([{
             "제목": title,
@@ -97,7 +98,8 @@ with st.form("upload_form", clear_on_submit=True):
             "등록일": now_kst,
             "파일데이터": file_bytes,
             "요약": summary,
-            "임베딩": embedding
+            "임베딩": embedding,
+            "본문": text
         }])
         st.session_state.documents = pd.concat([st.session_state.documents, new_doc], ignore_index=True)
         st.success(f"✅ 문서 업로드 및 요약 완료: {filename}")
