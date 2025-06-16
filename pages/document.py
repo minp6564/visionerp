@@ -103,6 +103,8 @@ with st.form("upload_form", clear_on_submit=True):
         }])
         st.session_state.documents = pd.concat([st.session_state.documents, new_doc], ignore_index=True)
         st.success(f"✅ 문서 업로드 및 요약 완료: {filename}")
+        st.session_state.document_knowledge = st.session_state.documents.to_dict("records")
+
 
 # ✅ 검색 입력
 col1, col2 = st.columns(2)
