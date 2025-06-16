@@ -113,9 +113,9 @@ with col2:
 st.markdown("### 🎯 GPT 유사도 가중치 조절")
 col1, col2, col3 = st.columns([2, 6, 2])
 with col1:
-    st.caption("제목 유사도")
-with col3:
     st.caption("본문 유사도")
+with col3:
+    st.caption("제목 유사도")
 with col2:
     title_weight = st.slider(
         label="가중치 슬라이더",
