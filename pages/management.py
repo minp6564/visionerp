@@ -40,13 +40,20 @@ if cursor.execute("SELECT COUNT(*) FROM employees").fetchone()[0] == 0:
         cursor.execute("""
             INSERT INTO employees (id, name, position, department, join_date, email)
             VALUES (?, ?, ?, ?, ?, ?)
-        """, (row.id, row.name, row.position, row.department, row.join_date, row.email))
+        """, (
+            row["id"], row["name"], row["position"],
+            row["department"], row["join_date"], row["email"]
+        ))
+
 
     for _, row in attendance_logs_df.iterrows():
         cursor.execute("""
             INSERT INTO attendance_logs (employee_id, date, clock_in, clock_out, location)
             VALUES (?, ?, ?, ?, ?)
-        """, (row.employee_id, row.date, row.clock_in, row.clock_out, row.location))
+        """, (
+            row["employee_id"], row["date"], row["clock_in"],
+            row["clock_out"], row["location"]
+        ))
 
     conn.commit()
 
