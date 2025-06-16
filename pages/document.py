@@ -5,24 +5,23 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from openai import OpenAI
 from data import dummy_data_management as dummy
-import fitz  # PyMuPDF
+from data.dummy_data_document import document_dummy_data
+import fitz
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 
 st.set_page_config(page_title="문서 관리", layout="wide")
 
-# ✅ API 키 확인
 if "api_key" not in st.session_state or not st.session_state.api_key:
     st.error("❌ 홈 화면에서 OpenAI API 키를 먼저 입력해 주세요.")
     st.stop()
 
-# ✅ 문서 데이터프레임 초기화
 if 'documents' not in st.session_state:
     st.session_state.documents = pd.DataFrame(columns=[
         "제목", "파일명", "업로더", "등록일", "파일데이터", "요약", "임베딩", "본문"
     ])
-
-# ✅ 버전 있는 파일명 생성
+    dummy_df = pd.DataFrame(document_dummy_data)
+    st.session_state.documents = pd.concat([dummy_df, st.session_state.documents], ignore_index=True)
 
 def get_versioned_filename(filename):
     name, ext = re.match(r"(.+?)(\.[^.]+)?$", filename).groups()
@@ -35,7 +34,6 @@ def get_versioned_filename(filename):
     new_version = max(versions) + 1 if versions else None
     return filename if new_version is None else f"{name}_v{new_version}{ext}"
 
-# ✅ GPT 요약 및 임베딩 함수
 @st.cache_data(show_spinner=False)
 def summarize_and_embed_with_gpt(title, text):
     try:
@@ -59,7 +57,6 @@ def summarize_and_embed_with_gpt(title, text):
     except Exception as e:
         return f"요약 실패: {e}", []
 
-# ✅ PDF 텍스트 추출 함수
 def extract_text_from_pdf(file_bytes):
     try:
         pdf = fitz.open(stream=file_bytes, filetype="pdf")
@@ -67,10 +64,8 @@ def extract_text_from_pdf(file_bytes):
     except Exception:
         return ""
 
-# ✅ 타이틀
 st.title("📚 문서 등록 및 공유")
 
-# ✅ 문서 업로드 폼
 with st.form("upload_form", clear_on_submit=True):
     st.subheader("📤 문서 업로드")
     uploaded_file = st.file_uploader("파일 선택", type=["pdf", "docx", "xlsx", "png", "jpg", "txt"])
@@ -79,8 +74,7 @@ with st.form("upload_form", clear_on_submit=True):
 
     if submitted and uploaded_file and uploader:
         filename = get_versioned_filename(uploaded_file.name)
-        title = uploaded_file.name.rsplit('.', 1)[0]  # 파일명에서 확장자 제거
-
+        title = uploaded_file.name.rsplit('.', 1)[0]
         now_kst = datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d %H:%M")
         file_bytes = uploaded_file.getvalue()
 
@@ -105,15 +99,12 @@ with st.form("upload_form", clear_on_submit=True):
         st.success(f"✅ 문서 업로드 및 요약 완료: {filename}")
         st.session_state.document_knowledge = st.session_state.documents.to_dict("records")
 
-
-# ✅ 검색 입력
 col1, col2 = st.columns(2)
 with col1:
     search = st.text_input("문서 제목 또는 담당자 검색")
 with col2:
     gpt_query = st.text_input("💡 GPT 기반 문서 검색어 입력")
 
-# ✅ 필터링 설정
 col1, col2 = st.columns(2)
 with col1:
     ext_filter = st.selectbox("확장자 필터", ["전체", "pdf", "docx", "xlsx", "png", "jpg", "txt"])
@@ -121,7 +112,6 @@ with col2:
     sort_by = st.selectbox("정렬 기준", ["등록일", "제목", "업로더"])
 sort_order = st.radio("정렬 순서", ["내림차순", "오름차순"], horizontal=True)
 
-# ✅ 문서 검색 수행
 filtered_docs = st.session_state.documents.copy()
 
 if search:
@@ -167,7 +157,6 @@ else:
         filtered_docs = filtered_docs[filtered_docs["파일명"].str.lower().str.endswith(ext_filter)]
     filtered_docs = filtered_docs.sort_values(by=sort_by, ascending=(sort_order == "오름차순")).reset_index(drop=True)
 
-# ✅ 문서 목록 출력
 st.markdown(f"**총 문서 수: {len(filtered_docs)}개**")
 if filtered_docs.empty:
     st.info("등록된 문서가 없습니다.")
@@ -195,3 +184,4 @@ else:
                         st.rerun()
                     else:
                         st.warning("❗ '삭제'라고 입력해야 삭제됩니다.")
+
