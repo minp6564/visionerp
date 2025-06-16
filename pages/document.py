@@ -49,7 +49,7 @@ def summarize_and_embed_with_gpt(title, text):
             temperature=0.3
         )
         summary = summary_resp.choices[0].message.content.strip()
-        embedding_input = f"{title}\n\n{text[:8000]}"
+        embedding_input = f"{title}\n\n{text}"
         emb_resp = client.embeddings.create(
             model="text-embedding-3-small",
             input=embedding_input
@@ -79,7 +79,7 @@ with st.form("upload_form", clear_on_submit=True):
 
     if submitted and uploaded_file and uploader:
         filename = get_versioned_filename(uploaded_file.name)
-        title = uploaded_file.name.rsplit('.', 1)[0]  # 파일명에서 확장자 제거
+        title = uploaded_file.name.rsplit('.', 1)[0]  # 파일명에서 확장자 제거한 것
 
         now_kst = datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d %H:%M")
         file_bytes = uploaded_file.getvalue()
@@ -109,6 +109,25 @@ with col1:
 with col2:
     gpt_query = st.text_input("💡 GPT 기반 문서 검색어 입력")
 
+# ✅ 유사도 가중치 슬라이더
+st.markdown("### 🎯 GPT 유사도 가중치 조절")
+col1, col2, col3 = st.columns([2, 6, 2])
+with col1:
+    st.caption("제목 유사도")
+with col3:
+    st.caption("본문 유사도")
+with col2:
+    title_weight = st.slider(
+        label="가중치 슬라이더",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.5,
+        step=0.05,
+        format="%.2f",
+        label_visibility="collapsed"
+    )
+st.caption(f"📌 현재 가중치 → 제목: **{title_weight:.2f}**, 본문: **{1 - title_weight:.2f}**")
+
 # ✅ 필터링 설정
 col1, col2 = st.columns(2)
 with col1:
@@ -133,29 +152,19 @@ if gpt_query:
             input=gpt_query
         ).data[0].embedding
 
-        title_sims, content_sims = [], []
-        for _, row in filtered_docs.iterrows():
-            title_emb = client.embeddings.create(
-                model="text-embedding-3-small",
-                input=row["제목"]
-            ).data[0].embedding
-            title_sim = cosine_similarity([query_emb], [title_emb])[0][0] if title_emb else 0.0
-            content_sim = cosine_similarity([query_emb], [row["임베딩"]])[0][0] if row["임베딩"] else 0.0
-            title_sims.append(title_sim)
-            content_sims.append(content_sim)
+        similarities = []
+        for idx, row in filtered_docs.iterrows():
+            if row["임베딩"]:
+                title_emb_input = f"{row['제목']}"
+                full_emb_input = f"{row['제목']}\n\n{text if 'text' in locals() else ''}"
+                doc_emb = np.array(row["임베딩"])
+                sim = cosine_similarity([query_emb], [doc_emb])[0][0]
+                similarities.append(sim)
+            else:
+                similarities.append(0.0)
 
-        filtered_docs["제목 유사도"] = title_sims
-        filtered_docs["본문 유사도"] = content_sims
-
-        colw1, colw2 = st.columns(2)
-        with colw1:
-            w_title = st.slider("제목 유사도 가중치", 0.0, 1.0, 0.3, 0.05)
-        with colw2:
-            st.caption(f"본문 유사도 가중치: {1 - w_title:.2f}")
-
-        filtered_docs["종합 유사도"] = w_title * filtered_docs["제목 유사도"] + (1 - w_title) * filtered_docs["본문 유사도"]
-        filtered_docs = filtered_docs.sort_values(by="종합 유사도", ascending=False)
-
+        filtered_docs["유사도"] = similarities
+        filtered_docs = filtered_docs.sort_values(by="유사도", ascending=False)
     except Exception as e:
         st.warning(f"GPT 검색 실패: {e}")
 else:
@@ -169,9 +178,7 @@ if filtered_docs.empty:
     st.info("등록된 문서가 없습니다.")
 else:
     for idx, row in filtered_docs.iterrows():
-        with st.expander(f"📄 {row['제목']}" + (f" (🧠 {row['종합 유사도']:.2f})" if "종합 유사도" in row else "")):
-            if "제목 유사도" in row:
-                st.caption(f"제목 유사도: {row['제목 유사도']:.2f} | 본문 유사도: {row['본문 유사도']:.2f}")
+        with st.expander(f"📄 {row['제목']}" + (f" (유사도: {row['유사도']:.2f})" if "유사도" in row else "")):
             st.caption(f"업로더: {row['업로더']} | 등록일: {row['등록일']}")
             st.download_button("⬇️ 다운로드", row["파일데이터"], file_name=row["파일명"], mime="application/octet-stream", key=f"down_{idx}")
             if row["요약"]:
