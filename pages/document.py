@@ -76,17 +76,19 @@ with st.form("upload_form", clear_on_submit=True):
     uploader = st.selectbox("담당자 선택", dummy.employees_df["name"].tolist())
     submitted = st.form_submit_button("업로드")
 
-    if submitted and uploaded_file and title and uploader:
+    if submitted and uploaded_file and uploader:
         filename = get_versioned_filename(uploaded_file.name)
+        title = uploaded_file.name.rsplit('.', 1)[0]  # 파일명에서 확장자 제거한 것
+    
         now_kst = datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d %H:%M")
         file_bytes = uploaded_file.getvalue()
-
+    
         if filename.lower().endswith(".pdf"):
             text = extract_text_from_pdf(file_bytes)
             summary, embedding = summarize_and_embed_with_gpt(text)
         else:
             summary, embedding = "(요약은 PDF 문서만 지원됩니다)", []
-
+    
         new_doc = pd.DataFrame([{
             "제목": title,
             "파일명": filename,
