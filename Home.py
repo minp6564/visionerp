@@ -13,7 +13,7 @@ today = datetime.date.today()
 st.set_page_config(page_title="🏭 ERP 홈 대시보드", layout="wide")
 st.title("visionerp")
 st.markdown("""
-이 시스템은 소규모 제조기업을 위한 **경량 ERP 솔루션**입니다.
+이 시스템은 소규모 제조기업을 위한 ERP입니다.
 
 ---
 
@@ -44,20 +44,40 @@ else:
     st.info("⚠️ GPT 기능을 사용하려면 API 키를 입력해야 합니다.")
 
 # -----------------------------
-# 더미 데이터
+# 실데이터 기반 KPI 지표 계산
 # -----------------------------
-production_today = 4
-stock_summary = {'원자재': 24, '완제품': 8}
-monthly_sales = {'건수': 102, '매출': 9400000}
-pending_io = {'입고': 2, '출고': 1}
+df = inventory_logs.copy()
+df["날짜"] = pd.to_datetime(df["날짜"])
+df["월"] = df["날짜"].dt.to_period("M").astype(str)
 
-production_log = pd.DataFrame({
-    '날짜': pd.date_range(end=today, periods=7),
-    '생산량': [80, 120, 90, 100, 130, 110, 150]
-})
+# 🔧 숫자형 변환
+df["입고단가"] = pd.to_numeric(df["입고단가"], errors="coerce").fillna(0)
+df["출고단가"] = pd.to_numeric(df["출고단가"], errors="coerce").fillna(0)
+df["수량"] = pd.to_numeric(df["수량"], errors="coerce").fillna(0)
+
+# ▶️ 오늘 날짜 필터
+df_today = df[df["날짜"].dt.date == today]
+
+# ▶️ 이번달 필터
+current_month = today.strftime("%Y-%m")
+df_month = df[df["월"] == current_month]
+
+# KPI 값 계산
+production_today = df_today[df_today["구분"] == "입고"].shape[0]
+raw_materials = df[df["구분"] == "입고"]["품목명"].nunique()
+finished_goods = df[df["구분"] == "출고"]["품목명"].nunique()
+monthly_sales_count = df_month[df_month["구분"] == "출고"].shape[0]
+monthly_sales_amount = (
+    df_month[df_month["구분"] == "출고"]
+    .eval("출고단가 * 수량")
+    .sum()
+)
+
+# 대기 건은 정의된 데이터가 없으므로 유지하거나 조건 지정
+pending_io = {"입고": 2, "출고": 1}
 
 # -----------------------------
-# KPI 지표
+# KPI 지표 표시
 # -----------------------------
 col1, col2, col3, col4 = st.columns(4)
 
@@ -65,12 +85,12 @@ with col1:
     st.metric("👷 오늘의 생산계획", f"{production_today} 건")
 
 with col2:
-    st.metric("📦 원자재", f"{stock_summary['원자재']} 종")
-    st.metric("📦 완제품", f"{stock_summary['완제품']} 종")
+    st.metric("📦 원자재", f"{raw_materials} 종")
+    st.metric("📦 완제품", f"{finished_goods} 종")
 
 with col3:
-    st.metric("💰 판매건수", f"{monthly_sales['건수']} 건")
-    st.metric("💵 월 매출", f"₩{monthly_sales['매출']:,}")
+    st.metric("💰 판매건수", f"{monthly_sales_count} 건")
+    st.metric("💵 월 매출", f"₩{int(monthly_sales_amount):,}")
 
 with col4:
     st.metric("⏳ 입고 대기", f"{pending_io['입고']} 건")
