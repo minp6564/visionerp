@@ -73,7 +73,6 @@ st.title("📚 문서 등록 및 공유")
 with st.form("upload_form", clear_on_submit=True):
     st.subheader("📤 문서 업로드")
     uploaded_file = st.file_uploader("파일 선택", type=["pdf", "docx", "xlsx", "png", "jpg", "txt"])
-    title = st.text_input("문서 제목", value=uploaded_file.name if uploaded_file else "")
     uploader = st.selectbox("담당자 선택", dummy.employees_df["name"].tolist())
     submitted = st.form_submit_button("업로드")
 
