@@ -37,7 +37,7 @@ def get_versioned_filename(filename):
 
 # ✅ GPT 요약 및 임베딩 함수
 @st.cache_data(show_spinner=False)
-def summarize_and_embed_with_gpt(text):
+def summarize_and_embed_with_gpt(title, text):
     try:
         client = OpenAI(api_key=st.session_state.api_key)
         summary_resp = client.chat.completions.create(
@@ -49,12 +49,11 @@ def summarize_and_embed_with_gpt(text):
             temperature=0.3
         )
         summary = summary_resp.choices[0].message.content.strip()
-        embedding_input = f"{title}\n\n{text[:8000]}"  # 제목 + 본문 앞부분
+        embedding_input = f"{title}\n\n{text[:8000]}"
         emb_resp = client.embeddings.create(
             model="text-embedding-3-small",
             input=embedding_input
         )
-
         embedding = emb_resp.data[0].embedding
         return summary, embedding
     except Exception as e:
@@ -80,17 +79,17 @@ with st.form("upload_form", clear_on_submit=True):
 
     if submitted and uploaded_file and uploader:
         filename = get_versioned_filename(uploaded_file.name)
-        title = uploaded_file.name.rsplit('.', 1)[0]  # 파일명에서 확장자 제거한 것
-    
+        title = uploaded_file.name.rsplit('.', 1)[0]  # 파일명에서 확장자 제거
+
         now_kst = datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d %H:%M")
         file_bytes = uploaded_file.getvalue()
-    
+
         if filename.lower().endswith(".pdf"):
             text = extract_text_from_pdf(file_bytes)
-            summary, embedding = summarize_and_embed_with_gpt(text)
+            summary, embedding = summarize_and_embed_with_gpt(title, text)
         else:
             summary, embedding = "(요약은 PDF 문서만 지원됩니다)", []
-    
+
         new_doc = pd.DataFrame([{
             "제목": title,
             "파일명": filename,
@@ -133,12 +132,30 @@ if gpt_query:
             model="text-embedding-3-small",
             input=gpt_query
         ).data[0].embedding
-        similarities = []
-        for emb in filtered_docs["임베딩"]:
-            sim = cosine_similarity([query_emb], [emb])[0][0] if emb else 0.0
-            similarities.append(sim)
-        filtered_docs["유사도"] = similarities
-        filtered_docs = filtered_docs.sort_values(by="유사도", ascending=False)
+
+        title_sims, content_sims = [], []
+        for _, row in filtered_docs.iterrows():
+            title_emb = client.embeddings.create(
+                model="text-embedding-3-small",
+                input=row["제목"]
+            ).data[0].embedding
+            title_sim = cosine_similarity([query_emb], [title_emb])[0][0] if title_emb else 0.0
+            content_sim = cosine_similarity([query_emb], [row["임베딩"]])[0][0] if row["임베딩"] else 0.0
+            title_sims.append(title_sim)
+            content_sims.append(content_sim)
+
+        filtered_docs["제목 유사도"] = title_sims
+        filtered_docs["본문 유사도"] = content_sims
+
+        colw1, colw2 = st.columns(2)
+        with colw1:
+            w_title = st.slider("제목 유사도 가중치", 0.0, 1.0, 0.3, 0.05)
+        with colw2:
+            st.caption(f"본문 유사도 가중치: {1 - w_title:.2f}")
+
+        filtered_docs["종합 유사도"] = w_title * filtered_docs["제목 유사도"] + (1 - w_title) * filtered_docs["본문 유사도"]
+        filtered_docs = filtered_docs.sort_values(by="종합 유사도", ascending=False)
+
     except Exception as e:
         st.warning(f"GPT 검색 실패: {e}")
 else:
@@ -152,7 +169,9 @@ if filtered_docs.empty:
     st.info("등록된 문서가 없습니다.")
 else:
     for idx, row in filtered_docs.iterrows():
-        with st.expander(f"📄 {row['제목']}" + (f" (유사도: {row['유사도']:.2f})" if "유사도" in row else "")):
+        with st.expander(f"📄 {row['제목']}" + (f" (🧠 {row['종합 유사도']:.2f})" if "종합 유사도" in row else "")):
+            if "제목 유사도" in row:
+                st.caption(f"제목 유사도: {row['제목 유사도']:.2f} | 본문 유사도: {row['본문 유사도']:.2f}")
             st.caption(f"업로더: {row['업로더']} | 등록일: {row['등록일']}")
             st.download_button("⬇️ 다운로드", row["파일데이터"], file_name=row["파일명"], mime="application/octet-stream", key=f"down_{idx}")
             if row["요약"]:
