@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS attendance_logs (
 """)
 conn.commit()
 
+# 더미 데이터 삽입 (처음 한 번만)
 if cursor.execute("SELECT COUNT(*) FROM employees").fetchone()[0] == 0:
     for _, row in employees_df.iterrows():
         cursor.execute("""
@@ -44,7 +45,6 @@ if cursor.execute("SELECT COUNT(*) FROM employees").fetchone()[0] == 0:
             row["id"], row["name"], row["position"],
             row["department"], row["join_date"], row["email"]
         ))
-
 
     for _, row in attendance_logs_df.iterrows():
         cursor.execute("""
@@ -61,7 +61,7 @@ if cursor.execute("SELECT COUNT(*) FROM employees").fetchone()[0] == 0:
 st.set_page_config(page_title="인사 관리 시스템", layout="wide")
 st.title("🧑‍💼 인사 관리 시스템 ")
 
-menu = st.sidebar.radio("인사 관리 시스템", ["직원 등록", "직원 목록","출근/퇴근 기록", "직원 수정", "직원 삭제"])
+menu = st.sidebar.radio("인사 관리 시스템", ["직원 등록", "직원 목록", "출근/퇴근 기록", "직원 수정", "직원 삭제"])
 
 # 직원 등록
 if menu == "직원 등록":
@@ -88,6 +88,8 @@ elif menu == "직원 목록":
     st.subheader("📋 직원 목록")
     df = pd.read_sql_query("SELECT * FROM employees", conn)
     st.dataframe(df, use_container_width=True)
+
+# 출근/퇴근 기록
 elif menu == "출근/퇴근 기록":
     st.subheader("🕒 출근 / 퇴근 기록")
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -98,11 +100,11 @@ elif menu == "출근/퇴근 기록":
     if df.empty:
         st.warning("직원 정보가 없습니다. 먼저 직원을 등록해주세요.")
     else:
-        employee_ids = df["id"].tolist()
-        selected_id = st.selectbox("직원 선택 (ID)", ["직원 선택"] + [str(i) for i in employee_ids])
+        employee_options = [f"{row['name']} ({row['id']})" for _, row in df.iterrows()]
+        selected_display = st.selectbox("직원 선택", ["직원 선택"] + employee_options)
 
-        if selected_id != "직원 선택":
-            EMPLOYEE_ID = int(selected_id)
+        if selected_display != "직원 선택":
+            EMPLOYEE_ID = int(selected_display.split("(")[-1][:-1])
 
             col1, col2 = st.columns([1, 1])
 
@@ -130,18 +132,18 @@ elif menu == "출근/퇴근 기록":
         else:
             st.info("직원을 선택해주세요.")
 
-
 # 직원 수정
 elif menu == "직원 수정":
     st.subheader("🛠️ 직원 정보 수정")
 
     df = pd.read_sql_query("SELECT * FROM employees", conn)
-    selected_id = st.selectbox("직원 선택 (ID)", df["id"])
+    employee_options = [f"{row['name']} ({row['id']})" for _, row in df.iterrows()]
+    selected_display = st.selectbox("직원 선택", employee_options)
 
-    if selected_id:
+    if selected_display:
+        selected_id = int(selected_display.split("(")[-1][:-1])
         employee = df[df["id"] == selected_id].iloc[0]
 
-        # ✅ 실제 데이터와 맞춰 부서 목록 구성
         department_options = ["경영팀", "회계팀", "인사팀", "영업팀", "전산팀", "마케팅팀"]
         position_options = ["사원", "대리", "과장", "차장", "부장", "임원"]
 
@@ -151,8 +153,7 @@ elif menu == "직원 수정":
             department = st.selectbox("부서", department_options, index=department_options.index(employee["department"]))
             join_date = st.date_input("입사일", value=datetime.fromisoformat(employee["join_date"]))
             email = st.text_input("이메일", value=employee["email"])
-            
-            # ✅ 반드시 submit 버튼 필요
+
             updated = st.form_submit_button("수정 완료")
 
             if updated:
@@ -169,9 +170,11 @@ elif menu == "직원 삭제":
     st.subheader("🗑️ 직원 삭제")
 
     df = pd.read_sql_query("SELECT * FROM employees", conn)
-    selected_id = st.selectbox("삭제할 직원 선택 (ID)", df["id"])
+    employee_options = [f"{row['name']} ({row['id']})" for _, row in df.iterrows()]
+    selected_display = st.selectbox("삭제할 직원 선택", employee_options)
 
     if st.button("삭제"):
+        selected_id = int(selected_display.split("(")[-1][:-1])
         cursor.execute("DELETE FROM employees WHERE id=?", (selected_id,))
         conn.commit()
         st.warning("직원 정보가 삭제되었습니다.")
