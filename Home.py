@@ -13,7 +13,7 @@ today = datetime.date.today()
 st.set_page_config(page_title="🏭 ERP 홈 대시보드", layout="wide")
 st.title("visionerp")
 st.markdown("""
-이 시스템은 소규모 제조기업을 위한 ERP입니다.
+이 시스템은 소규모 유통기업을 위한 ERP입니다.
 
 ---
 
@@ -44,28 +44,26 @@ else:
     st.info("⚠️ GPT 기능을 사용하려면 API 키를 입력해야 합니다.")
 
 # -----------------------------
-# 실데이터 기반 KPI 지표 계산
+# KPI 지표 계산 (수정 반영)
 # -----------------------------
 df = inventory_logs.copy()
 df["날짜"] = pd.to_datetime(df["날짜"])
 df["월"] = df["날짜"].dt.to_period("M").astype(str)
 
-# 🔧 숫자형 변환
+# 숫자형 변환
 df["입고단가"] = pd.to_numeric(df["입고단가"], errors="coerce").fillna(0)
 df["출고단가"] = pd.to_numeric(df["출고단가"], errors="coerce").fillna(0)
 df["수량"] = pd.to_numeric(df["수량"], errors="coerce").fillna(0)
 
-# ▶️ 오늘 날짜 필터
+# 오늘/이번달 필터
+today = datetime.date.today()
 df_today = df[df["날짜"].dt.date == today]
-
-# ▶️ 이번달 필터
 current_month = today.strftime("%Y-%m")
 df_month = df[df["월"] == current_month]
 
-# KPI 값 계산
-production_today = df_today[df_today["구분"] == "입고"].shape[0]
-raw_materials = df[df["구분"] == "입고"]["품목명"].nunique()
-finished_goods = df[df["구분"] == "출고"]["품목명"].nunique()
+# KPI 계산
+raw_materials = df["납품업체명"].nunique()
+finished_goods = df["품목명"].nunique()
 monthly_sales_count = df_month[df_month["구분"] == "출고"].shape[0]
 monthly_sales_amount = (
     df_month[df_month["구분"] == "출고"]
@@ -73,17 +71,17 @@ monthly_sales_amount = (
     .sum()
 )
 
-# 대기 건은 정의된 데이터가 없으므로 유지하거나 조건 지정
+# 대기 항목은 임시 값 유지
 pending_io = {"입고": 2, "출고": 1}
 
 # -----------------------------
-# KPI 지표 표시
+# KPI 지표 표시 (3열 구성)
 # -----------------------------
 col2, col3, col4 = st.columns(3)
 
 with col2:
-    st.metric("📦 원자재", f"{raw_materials} 종")
-    st.metric("📦 완제품", f"{finished_goods} 종")
+    st.metric("📦 거래처", f"{raw_materials} 곳")
+    st.metric("📦 상품 종류", f"{finished_goods} 종")
 
 with col3:
     st.metric("💰 판매건수", f"{monthly_sales_count} 건")
@@ -95,8 +93,9 @@ with col4:
 
 st.divider()
 
+
 # -----------------------------
-# 생산량 → 수익 추이로 대체
+# 수익 추이
 # -----------------------------
 df = inventory_logs.copy()
 df["날짜"] = pd.to_datetime(df["날짜"])
