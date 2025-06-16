@@ -131,12 +131,7 @@ if search:
 if gpt_query:
     try:
         client = OpenAI(api_key=st.session_state.api_key)
-        query_emb_title = client.embeddings.create(
-            model="text-embedding-3-small",
-            input=gpt_query
-        ).data[0].embedding
-
-        query_emb_body = client.embeddings.create(
+        query_emb = client.embeddings.create(
             model="text-embedding-3-small",
             input=gpt_query
         ).data[0].embedding
@@ -144,9 +139,11 @@ if gpt_query:
         title_sims, body_sims, combined = [], [], []
         for idx, row in filtered_docs.iterrows():
             if row["임베딩"]:
-                doc_emb = np.array(row["임베딩"])
-                title_sim = cosine_similarity([query_emb_title], [client.embeddings.create(model="text-embedding-3-small", input=row["제목"]).data[0].embedding])[0][0] if row["제목"] else 0.0
-                body_sim = cosine_similarity([query_emb_body], [client.embeddings.create(model="text-embedding-3-small", input=row["본문"][:5000]).data[0].embedding])[0][0] if row["본문"] else 0.0
+                doc_title_emb = client.embeddings.create(model="text-embedding-3-small", input=row["제목"]).data[0].embedding if row["제목"] else [0.0]*len(query_emb)
+                doc_body_emb = client.embeddings.create(model="text-embedding-3-small", input=row["본문"][:5000]).data[0].embedding if row["본문"] else [0.0]*len(query_emb)
+
+                title_sim = cosine_similarity([query_emb], [doc_title_emb])[0][0]
+                body_sim = cosine_similarity([query_emb], [doc_body_emb])[0][0]
                 score = title_weight * title_sim + (1 - title_weight) * body_sim
                 title_sims.append(title_sim)
                 body_sims.append(body_sim)
