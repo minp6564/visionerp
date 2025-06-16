@@ -19,11 +19,8 @@ if "api_key" not in st.session_state or not st.session_state.api_key:
 # ✅ 문서 데이터프레임 초기화
 if 'documents' not in st.session_state:
     st.session_state.documents = pd.DataFrame(columns=[
-        "제목", "파일명", "업로더", "등록일", "파일데이터", "요약", "임베딩", "전체텍스트"
+        "제목", "파일명", "업로더", "등록일", "파일데이터", "요약", "임베딩"
     ])
-
-if 'document_knowledge' not in st.session_state:
-    st.session_state.document_knowledge = []
 
 # ✅ 버전 있는 파일명 생성
 
@@ -89,7 +86,6 @@ with st.form("upload_form", clear_on_submit=True):
             text = extract_text_from_pdf(file_bytes)
             summary, embedding = summarize_and_embed_with_gpt(text)
         else:
-            text = "(텍스트 추출 불가)"
             summary, embedding = "(요약은 PDF 문서만 지원됩니다)", []
 
         new_doc = pd.DataFrame([{
@@ -99,79 +95,77 @@ with st.form("upload_form", clear_on_submit=True):
             "등록일": now_kst,
             "파일데이터": file_bytes,
             "요약": summary,
-            "임베딩": embedding,
-            "전체텍스트": text
+            "임베딩": embedding
         }])
         st.session_state.documents = pd.concat([st.session_state.documents, new_doc], ignore_index=True)
-
-        st.session_state.document_knowledge.append({
-            "제목": title,
-            "요약": summary,
-            "전체텍스트": text,
-            "업로더": uploader
-        })
-
         st.success(f"✅ 문서 업로드 및 요약 완료: {filename}")
 
-# ✅ 검색 및 정렬
-st.subheader("🔍 문서 목록")
+# ✅ 검색 입력
 col1, col2 = st.columns(2)
 with col1:
     search = st.text_input("문서 제목 또는 담당자 검색")
 with col2:
-    ext_filter = st.selectbox("확장자 필터", ["전체", "pdf", "docx", "xlsx", "png", "jpg", "txt"])
+    gpt_query = st.text_input("💡 GPT 기반 문서 검색어 입력")
 
-sort_by = st.selectbox("정렬 기준", ["등록일", "제목", "업로더"])
+# ✅ 필터링 설정
+col1, col2 = st.columns(2)
+with col1:
+    ext_filter = st.selectbox("확장자 필터", ["전체", "pdf", "docx", "xlsx", "png", "jpg", "txt"])
+with col2:
+    sort_by = st.selectbox("정렬 기준", ["등록일", "제목", "업로더"])
 sort_order = st.radio("정렬 순서", ["내림차순", "오름차순"], horizontal=True)
 
-docs = st.session_state.documents.copy()
+# ✅ 문서 검색 수행
+filtered_docs = st.session_state.documents.copy()
 
 if search:
-    docs = docs[docs.apply(
-        lambda r: search.lower() in r["제목"].lower() or search.lower() in r["업로더"].lower(),
-        axis=1
+    filtered_docs = filtered_docs[filtered_docs.apply(
+        lambda r: search.lower() in r["제목"].lower() or search.lower() in r["업로더"].lower(), axis=1
     )]
-if ext_filter != "전체":
-    docs = docs[docs["파일명"].str.lower().str.endswith(ext_filter)]
 
-docs = docs.sort_values(by=sort_by, ascending=(sort_order == "오름차순")).reset_index(drop=True)
+if gpt_query:
+    try:
+        client = OpenAI(api_key=st.session_state.api_key)
+        query_emb = client.embeddings.create(
+            model="text-embedding-3-small",
+            input=gpt_query
+        ).data[0].embedding
+        similarities = []
+        for emb in filtered_docs["임베딩"]:
+            sim = cosine_similarity([query_emb], [emb])[0][0] if emb else 0.0
+            similarities.append(sim)
+        filtered_docs["유사도"] = similarities
+        filtered_docs = filtered_docs.sort_values(by="유사도", ascending=False)
+    except Exception as e:
+        st.warning(f"GPT 검색 실패: {e}")
+else:
+    if ext_filter != "전체":
+        filtered_docs = filtered_docs[filtered_docs["파일명"].str.lower().str.endswith(ext_filter)]
+    filtered_docs = filtered_docs.sort_values(by=sort_by, ascending=(sort_order == "오름차순")).reset_index(drop=True)
 
-st.markdown(f"**총 문서 수: {len(docs)}개**")
-if docs.empty:
+# ✅ 문서 목록 출력
+st.markdown(f"**총 문서 수: {len(filtered_docs)}개**")
+if filtered_docs.empty:
     st.info("등록된 문서가 없습니다.")
 else:
-    for idx, row in docs.iterrows():
-        with st.expander(f"📄 {row['제목']}"):
+    for idx, row in filtered_docs.iterrows():
+        with st.expander(f"📄 {row['제목']}" + (f" (유사도: {row['유사도']:.2f})" if "유사도" in row else "")):
             st.caption(f"업로더: {row['업로더']} | 등록일: {row['등록일']}")
-            st.download_button(
-                "⬇️ 다운로드",
-                data=row["파일데이터"],
-                file_name=row["파일명"],
-                mime="application/octet-stream",
-                key=f"download_{idx}"
-            )
-            if row.get("요약"):
-                st.markdown("**📌 요약 내용:**")
+            st.download_button("⬇️ 다운로드", row["파일데이터"], file_name=row["파일명"], mime="application/octet-stream", key=f"down_{idx}")
+            if row["요약"]:
+                st.markdown("**📌 요약:**")
                 st.info(row["요약"])
-            if row.get("임베딩"):
-                if st.button("🔎 임베딩 값 보기", key=f"embedding_btn_{idx}"):
-                    st.json(row["임베딩"], expanded=False)
-
-            col1, col2 = st.columns([3, 1])
+            if row["임베딩"]:
+                if st.button("🔎 임베딩 보기", key=f"embed_btn_{idx}"):
+                    st.json(row["임베딩"])
+            col1, col2 = st.columns([3,1])
             with col1:
-                delete_input = st.text_input(
-                    f"'{row['제목']}' 삭제 확인용 입력",
-                    key=f"delete_input_{idx}",
-                    label_visibility="collapsed",
-                    placeholder="삭제"
-                )
+                delete_input = st.text_input("삭제하려면 '삭제' 입력", key=f"del_in_{idx}", label_visibility="collapsed", placeholder="삭제")
             with col2:
-                if st.button("🗑️ 삭제", key=f"delete_btn_{idx}"):
+                if st.button("🗑️ 삭제", key=f"del_btn_{idx}"):
                     if delete_input.strip() == "삭제":
-                        st.session_state.documents.drop(index=idx, inplace=True)
-                        st.session_state.documents.reset_index(drop=True, inplace=True)
-                        st.success(f"✅ '{row['제목']}' 문서가 삭제되었습니다.")
-                        st.experimental_rerun()
+                        st.session_state.documents = st.session_state.documents.drop(index=idx).reset_index(drop=True)
+                        st.success(f"✅ '{row['제목']}' 삭제 완료")
+                        st.rerun()
                     else:
-                        st.warning("❗ 삭제하려면 '삭제'라고 입력해 주세요.")
-            st.markdown("---")
+                        st.warning("❗ '삭제'라고 입력해야 삭제됩니다.")
