@@ -70,7 +70,7 @@ if menu == "직원 등록":
     with st.form("register_form"):
         name = st.text_input("이름")
         position = st.selectbox("직급", ["사원", "대리", "과장", "차장", "부장", "임원"])
-        department = st.selectbox("부서", ["경영", "회계", "인사", "영업", "전산", "마케팅"])
+        department = st.selectbox("부서", ["경영팀", "물류팀", "인사팀", "영업팀", "전산팀", "마케팅팀"])
         join_date = st.date_input("입사일", value=datetime.today())
         email = st.text_input("이메일")
         submitted = st.form_submit_button("등록")
@@ -144,7 +144,7 @@ elif menu == "직원 수정":
         selected_id = int(selected_display.split("(")[-1][:-1])
         employee = df[df["id"] == selected_id].iloc[0]
 
-        department_options = ["경영팀", "회계팀", "인사팀", "영업팀", "전산팀", "마케팅팀"]
+        department_options = ["경영팀", "물류팀", "인사팀", "영업팀", "전산팀", "마케팅팀"]
         position_options = ["사원", "대리", "과장", "차장", "부장", "임원"]
 
         with st.form("edit_form"):
