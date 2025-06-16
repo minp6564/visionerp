@@ -79,10 +79,7 @@ pending_io = {"입고": 2, "출고": 1}
 # -----------------------------
 # KPI 지표 표시
 # -----------------------------
-col1, col2, col3, col4 = st.columns(4)
-
-with col1:
-    st.metric("👷 오늘의 생산계획", f"{production_today} 건")
+col2, col3, col4 = st.columns(3)
 
 with col2:
     st.metric("📦 원자재", f"{raw_materials} 종")
