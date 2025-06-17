@@ -15,11 +15,29 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # 세션 초기화
+# 더미 데이터 로드
+try:
+    from data.dummy_data_document import dummy_data
+    if 'dummy_loaded' not in st.session_state:
+        for entry in dummy_data:
+            add_transaction(
+                pd.to_datetime(entry["날짜"]),
+                entry["설명"],
+                entry["입금"],
+                entry["출금"],
+                entry["유형"],
+                entry["카테고리"],
+                entry["메모"]
+            )
+        st.session_state.dummy_loaded = True
+        st.success("더미 데이터를 성공적으로 불러왔습니다.")
+except Exception as e:
+    st.warning(f"더미 데이터 불러오기 실패: {e}")
 if 'transactions' not in st.session_state:
     st.session_state.transactions = []
-    st.session_state.assets = {'유동자산': 0, '비유동자산': 0}
-    st.session_state.liabilities = {'유동부채': 0, '비유동부채': 0}
-    st.session_state.equity = {'자본금': 0, '이익잉여금': 0}
+    st.session_state.assets = {'유동자산': 0, '비유동자산': 0, '현금': 0, '매출채권': 0, '재고자산': 0}
+    st.session_state.liabilities = {'유동부채': 0, '비유동부채': 0, '매입채무': 0, '미지급금': 0, '차입금': 0}
+    st.session_state.equity = {'자본금': 0, '이익잉여금': 0, '자본잉여금': 0}
 
 # 거래 추가 함수
 def add_transaction(date, description, amount_in, amount_out, transaction_type, category, memo):
@@ -39,11 +57,11 @@ def add_transaction(date, description, amount_in, amount_out, transaction_type, 
 # 거래 유형에 따른 카테고리 매핑
 def get_category_options(transaction_type):
     if transaction_type == "자산":
-        return ["유동자산", "비유동자산"]
+        return ["유동자산", "비유동자산", "현금", "매출채권", "재고자산"]
     elif transaction_type == "부채":
-        return ["유동부채", "비유동부채"]
+        return ["유동부채", "비유동부채", "매입채무", "미지급금", "차입금"]
     elif transaction_type == "자본":
-        return ["자본금", "이익잉여금"]
+        return ["자본금", "이익잉여금", "자본잉여금"]
     else:
         return []
 
