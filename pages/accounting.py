@@ -15,24 +15,31 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # 세션 초기화
-# 더미 데이터 로드
-try:
-    from data.dummy_data_document import dummy_data
-    if 'dummy_loaded' not in st.session_state:
-        for entry in dummy_data:
-            add_transaction(
-                pd.to_datetime(entry["날짜"]),
-                entry["설명"],
-                entry["입금"],
-                entry["출금"],
-                entry["유형"],
-                entry["카테고리"],
-                entry["메모"]
-            )
-        st.session_state.dummy_loaded = True
-        st.success("더미 데이터를 성공적으로 불러왔습니다.")
-except Exception as e:
-    st.warning(f"더미 데이터 불러오기 실패: {e}")
+if 'transactions' not in st.session_state:
+    st.session_state.transactions = []
+    st.session_state.assets = {'유동자산': 0, '비유동자산': 0, '현금': 0, '매출채권': 0, '재고자산': 0}
+    st.session_state.liabilities = {'유동부채': 0, '비유동부채': 0, '매입채무': 0, '미지급금': 0, '차입금': 0}
+    st.session_state.equity = {'자본금': 0, '이익잉여금': 0, '자본잉여금': 0}
+
+# 더미 데이터 함수 불러오기
+def load_dummy_data():
+    try:
+        from data.dummy_data_document import dummy_data
+        if 'dummy_loaded' not in st.session_state:
+            for entry in dummy_data:
+                add_transaction(
+                    pd.to_datetime(entry["날짜"]),
+                    entry["설명"],
+                    entry["입금"],
+                    entry["출금"],
+                    entry["유형"],
+                    entry["카테고리"],
+                    entry["메모"]
+                )
+            st.session_state.dummy_loaded = True
+            st.success("더미 데이터를 성공적으로 불러왔습니다.")
+    except Exception as e:
+        st.warning(f"더미 데이터 불러오기 실패: {e}")
 if 'transactions' not in st.session_state:
     st.session_state.transactions = []
     st.session_state.assets = {'유동자산': 0, '비유동자산': 0, '현금': 0, '매출채권': 0, '재고자산': 0}
@@ -122,6 +129,8 @@ def main():
     st.markdown('<div class="sub-title">거래 내역을 추가하고 재무상태표를 확인하세요!</div>', unsafe_allow_html=True)
 
     year = st.selectbox("불러올 연도 선택", list(financials_by_year.keys()))
+    if st.button("거래 더미 데이터 불러오기"):
+        load_dummy_data()))
     if st.button("재무제표 불러오기"):
         load_financials(year)
 
