@@ -18,11 +18,12 @@ st.markdown("""
 if 'transactions' not in st.session_state:
     st.session_state.transactions = []
     st.session_state.assets = {
-        '유동자산': 0, '비유동자산': 0, '현금': 0, '매출채권': 0, '재고자산': 0,
-        '선급금': 0, '선급비용': 0, '기타유동자산': 0, '건물': 0, '토지': 0, '기계장치': 0
+        '현금': 0, '매출채권': 0, '재고자산': 0,
+        '선급금': 0, '선급비용': 0, '기타유동자산': 0,
+        '건물': 0, '토지': 0, '기계장치': 0
     }
     st.session_state.liabilities = {
-        '유동부채': 0, '비유동부채': 0, '매입채무': 0, '미지급금': 0, '단기차입금': 0, '장기차입금': 0
+        '매입채무': 0, '미지급금': 0, '단기차입금': 0, '장기차입금': 0
     }
     st.session_state.equity = {
         '자본금': 0, '이익잉여금': 0, '자본잉여금': 0
@@ -93,9 +94,9 @@ def add_transaction(date, description, amount_in, amount_out, transaction_type, 
 # 거래 유형에 따른 카테고리 매핑
 def get_category_options(transaction_type):
     if transaction_type == "자산":
-        return ["유동자산", "비유동자산", "현금", "매출채권", "재고자산", "선급금", "선급비용", "기타유동자산", "건물", "토지", "기계장치"]
+        return ["현금", "매출채권", "재고자산", "선급금", "선급비용", "기타유동자산", "건물", "토지", "기계장치"]
     elif transaction_type == "부채":
-        return ["유동부채", "비유동부채", "매입채무", "미지급금", "단기차입금", "장기차입금"]
+        return ["매입채무", "미지급금", "단기차입금", "장기차입금"]
     elif transaction_type == "자본":
         return ["자본금", "이익잉여금", "자본잉여금"]
     else:
