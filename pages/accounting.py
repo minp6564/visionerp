@@ -58,25 +58,25 @@ def get_category_options(transaction_type):
     else:
         return []
 
-# 더미 데이터 불러오기 (예: 외부 파일에서 처리할 수 있도록 수정 권장)
-def load_dummy_data():
-    dummy_entries = [
-        {"날짜": "2025-01-01", "설명": "초기 자산", "입금": 1000000, "출금": 0, "유형": "자산", "카테고리": "현금", "메모": "초기 입금"},
-        {"날짜": "2025-01-02", "설명": "재고 구입", "입금": 0, "출금": 300000, "유형": "자산", "카테고리": "재고자산", "메모": "초기 재고"},
-        {"날짜": "2025-01-03", "설명": "자본금 투입", "입금": 500000, "출금": 0, "유형": "자본", "카테고리": "자본금", "메모": "초기 자본금"}
-    ]
-
-    for entry in dummy_entries:
-        add_transaction(
-            pd.to_datetime(entry["날짜"]),
-            entry["설명"],
-            entry["입금"],
-            entry["출금"],
-            entry["유형"],
-            entry["카테고리"],
-            entry["메모"]
-        )
-    st.success("더미 데이터를 성공적으로 불러왔습니다.")
+# 더미 데이터 불러오기 (dummy_data.py에서 inventory_logs 불러오기)
+def load_dummy_data_from_py():
+    if 'dummy_loaded' not in st.session_state:
+        try:
+            from data.dummy_data import inventory_logs
+            for _, row in inventory_logs.iterrows():
+                add_transaction(
+                    pd.to_datetime(row["날짜"]),
+                    row.get("공급명", row.get("품명", "거래 없음")),
+                    float(row.get("입고수량", 0)),
+                    float(row.get("출고수량", 0)),
+                    "자산",
+                    "재고자산",
+                    row.get("비고", "")
+                )
+            st.session_state.dummy_loaded = True
+            st.success("더미 데이터를 성공적으로 불러왔습니다.")
+        except Exception as e:
+            st.error(f"더미 데이터 로드 중 오류 발생: {e}")
 
 # 재무상태표 출력 함수
 def balance_sheet():
@@ -109,8 +109,8 @@ def main():
     st.markdown('<div class="title">회계 시스템</div>', unsafe_allow_html=True)
     st.markdown('<div class="sub-title">거래 내역을 추가하고 재무상태표를 확인하세요!</div>', unsafe_allow_html=True)
 
-    if st.button("거래 더미 데이터 불러오기"):
-        load_dummy_data()
+    if st.button("더미 데이터(PY) 불러오기 🐍"):
+        load_dummy_data_from_py()
 
     with st.expander("거래 입력하기"):
         st.markdown('<div class="section-header">거래 입력</div>', unsafe_allow_html=True)
