@@ -59,22 +59,25 @@ def get_category_options(transaction_type):
         return []
 
 # 더미 데이터 불러오기
-from data.dummy_data_document import dummy_data
+try:
+    from data.dummy_data_document import dummy_data
 
-def load_dummy_data():
-    if 'dummy_loaded' not in st.session_state:
-        for entry in dummy_data:
-            add_transaction(
-                pd.to_datetime(entry["날짜"]),
-                entry["설명"],
-                entry["입금"],
-                entry["출금"],
-                entry["유형"],
-                entry["카테고리"],
-                entry["메모"]
-            )
-        st.session_state.dummy_loaded = True
-        st.success("더미 데이터를 성공적으로 불러왔습니다.")
+    def load_dummy_data():
+        if 'dummy_loaded' not in st.session_state:
+            for entry in dummy_data:
+                add_transaction(
+                    pd.to_datetime(entry["날짜"]),
+                    entry["설명"],
+                    entry["입금"],
+                    entry["출금"],
+                    entry["유형"],
+                    entry["카테고리"],
+                    entry["메모"]
+                )
+            st.session_state.dummy_loaded = True
+except ImportError:
+    def load_dummy_data():
+        st.warning("더미 데이터를 불러오는 데 실패했습니다. 파일이 존재하는지 확인하세요.")
 
 # 재무상태표 출력 함수
 def balance_sheet():
