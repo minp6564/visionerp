@@ -33,45 +33,15 @@ if 'transactions' not in st.session_state:
         '기타포괄손익누계액': 0, '자기주식': 0
     }
 
-# 거래 추가 함수
-def add_transaction(date, description, amount_in, amount_out, transaction_type, category, memo):
-    transaction = {
-        "날짜": date, "설명": description, "입금": amount_in, "출금": amount_out,
-        "유형": transaction_type, "카테고리": category, "메모": memo
-    }
-    st.session_state.transactions.append(transaction)
-
-    if category in st.session_state.assets:
-        st.session_state.assets[category] += amount_in
-    elif category in st.session_state.liabilities:
-        st.session_state.liabilities[category] += amount_out
-    elif category in st.session_state.equity:
-        st.session_state.equity[category] += amount_in
-
-# 거래 유형에 따른 카테고리 매핑
-def get_category_options(transaction_type):
-    if transaction_type == "자산":
-        return list(st.session_state.assets.keys())
-    elif transaction_type == "부채":
-        return list(st.session_state.liabilities.keys())
-    elif transaction_type == "자본":
-        return list(st.session_state.equity.keys())
-    else:
-        return []
-
 # dummy_data.py의 inventory_logs를 이용해 거래 데이터 불러오기
+
 def load_dummy_data_from_py():
     if 'dummy_loaded' not in st.session_state:
         for _, row in inventory_logs.iterrows():
-            add_transaction(
-                pd.to_datetime(row['날짜']),
-                row.get('공급명', row.get('품명', '기타')),
-                row.get('입고수량', 0),
-                row.get('출고수량', 0),
-                '자산',
-                '재고자산',
-                row.get('비고', '')
-            )
+            if row['구분'] == '입고':
+                st.session_state.assets['재고자산'] += row['수량'] * row['입고단가']
+            elif row['구분'] == '출고':
+                st.session_state.assets['재고자산'] -= row['수량'] * row['출고단가']
         st.session_state.dummy_loaded = True
         st.success("dummy_data.py로부터 데이터를 성공적으로 불러왔습니다.")
 
@@ -104,30 +74,10 @@ def balance_sheet():
 # 메인 UI 함수
 def main():
     st.markdown('<div class="title">회계 시스템</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sub-title">거래 내역을 추가하고 재무상태표를 확인하세요!</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sub-title">입출고 데이터를 불러와 재무상태표를 확인하세요!</div>', unsafe_allow_html=True)
 
     if st.button("더미 데이터(PY) 불러오기 🐍"):
         load_dummy_data_from_py()
-
-    with st.expander("거래 입력하기"):
-        st.markdown('<div class="section-header">거래 입력</div>', unsafe_allow_html=True)
-        date = st.date_input("날짜 📅", value=datetime.today())
-        description = st.text_area("설명 📝")
-        amount_in = st.number_input("입금액 💰", min_value=0.0, value=0.0)
-        amount_out = st.number_input("출금액 💳", min_value=0.0, value=0.0)
-        transaction_type = st.selectbox("거래 유형", ["자산", "부채", "자본"])
-
-        category_options = get_category_options(transaction_type)
-        category = st.selectbox("카테고리", category_options)
-        memo = st.text_input("비고", "")
-
-        if st.button("거래 추가 ✅"):
-            add_transaction(date, description, amount_in, amount_out, transaction_type, category, memo)
-            st.success("거래가 성공적으로 추가되었습니다!")
-
-    if len(st.session_state.transactions) > 0:
-        st.markdown('<div class="section-header">추가된 거래 목록</div>', unsafe_allow_html=True)
-        st.dataframe(pd.DataFrame(st.session_state.transactions))
 
     if st.button("재무상태표 조회 📊"):
         balance_sheet()
