@@ -5,7 +5,7 @@ from datetime import datetime
 # 스타일 설정
 st.markdown("""
     <style>
-        .title { color: #2F4F4F; font-size: 40px; font-weight: bold; text-align: center; margin-top: 20px; }ㅇ
+        .title { color: #2F4F4F; font-size: 40px; font-weight: bold; text-align: center; margin-top: 20px; }
         .sub-title { color: #5F6368; font-size: 30px; text-align: center; }
         .section-header { color: #00796B; font-size: 20px; font-weight: bold; margin-top: 20px; }
         .footer { text-align: center; margin-top: 50px; font-size: 14px; color: #00796B; }
@@ -58,48 +58,25 @@ def get_category_options(transaction_type):
     else:
         return []
 
-# 더미 데이터 (1월~6월 전체)
-dummy_data = " + ' + '.join([f"""
-    [
-        {"날짜": "2025-01-{i:02}", "설명": "설명 {i}", "입금": {i * 10000}, "출금": {i * 5000}, "유형": "자산", "카테고리": "현금", "메모": "메모 {i}"},
-    ]""" for i in range(1, 31)]) + '
-' + ' + '.join([f"""
-    [
-        {{"날짜": "2025-02-{i:02}", "설명": "설명 {i}", "입금": {i * 12000}, "출금": {i * 4000}, "유형": "부채", "카테고리": "매입채무", "메모": "메모 {i}"}},
-    ]""" for i in range(1, 29)]) + '
-' + ' + '.join([f"""
-    [
-        {{"날짜": "2025-03-{i:02}", "설명": "설명 {i}", "입금": {i * 11000}, "출금": {i * 3000}, "유형": "자본", "카테고리": "자본금", "메모": "메모 {i}"}},
-    ]""" for i in range(1, 32)]) + '
-' + ' + '.join([f"""
-    [
-        {{"날짜": "2025-04-{i:02}", "설명": "설명 {i}", "입금": {i * 10500}, "출금": {i * 2500}, "유형": "자산", "카테고리": "재고자산", "메모": "메모 {i}"}},
-    ]""" for i in range(1, 31)]) + '
-' + ' + '.join([f"""
-    [
-        {{"날짜": "2025-05-{i:02}", "설명": "설명 {i}", "입금": {i * 11500}, "출금": {i * 2000}, "유형": "부채", "카테고리": "미지급금", "메모": "메모 {i}"}},
-    ]""" for i in range(1, 32)]) + '
-' + ' + '.join([f"""
-    [
-        {{"날짜": "2025-06-{i:02}", "설명": "설명 {i}", "입금": {i * 13000}, "출금": {i * 1500}, "유형": "자본", "카테고리": "이익잉여금", "메모": "메모 {i}"}},
-    ]""" for i in range(1, 14)]) + '
-'
-
-# 더미 데이터 불러오기
+# 더미 데이터 불러오기 (예: 외부 파일에서 처리할 수 있도록 수정 권장)
 def load_dummy_data():
-    if 'dummy_loaded' not in st.session_state:
-        for entry in dummy_data:
-            add_transaction(
-                pd.to_datetime(entry["날짜"]),
-                entry["설명"],
-                entry["입금"],
-                entry["출금"],
-                entry["유형"],
-                entry["카테고리"],
-                entry["메모"]
-            )
-        st.session_state.dummy_loaded = True
-        st.success("더미 데이터를 성공적으로 불러왔습니다.")
+    dummy_entries = [
+        {"날짜": "2025-01-01", "설명": "초기 자산", "입금": 1000000, "출금": 0, "유형": "자산", "카테고리": "현금", "메모": "초기 입금"},
+        {"날짜": "2025-01-02", "설명": "재고 구입", "입금": 0, "출금": 300000, "유형": "자산", "카테고리": "재고자산", "메모": "초기 재고"},
+        {"날짜": "2025-01-03", "설명": "자본금 투입", "입금": 500000, "출금": 0, "유형": "자본", "카테고리": "자본금", "메모": "초기 자본금"}
+    ]
+
+    for entry in dummy_entries:
+        add_transaction(
+            pd.to_datetime(entry["날짜"]),
+            entry["설명"],
+            entry["입금"],
+            entry["출금"],
+            entry["유형"],
+            entry["카테고리"],
+            entry["메모"]
+        )
+    st.success("더미 데이터를 성공적으로 불러왔습니다.")
 
 # 재무상태표 출력 함수
 def balance_sheet():
