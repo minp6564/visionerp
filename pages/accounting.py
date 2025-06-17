@@ -15,31 +15,58 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # 세션 초기화
-
-# 더미 데이터 함수 불러오기
-def load_dummy_data():
-    try:
-        from data.dummy_data_document import dummy_data
-        if 'dummy_loaded' not in st.session_state:
-            for entry in dummy_data:
-                add_transaction(
-                    pd.to_datetime(entry["날짜"]),
-                    entry["설명"],
-                    entry["입금"],
-                    entry["출금"],
-                    entry["유형"],
-                    entry["카테고리"],
-                    entry["메모"]
-                )
-            st.session_state.dummy_loaded = True
-            st.success("더미 데이터를 성공적으로 불러왔습니다.")
-    except Exception as e:
-        st.warning(f"더미 데이터 불러오기 실패: {e}")
 if 'transactions' not in st.session_state:
     st.session_state.transactions = []
     st.session_state.assets = {'유동자산': 0, '비유동자산': 0, '현금': 0, '매출채권': 0, '재고자산': 0}
     st.session_state.liabilities = {'유동부채': 0, '비유동부채': 0, '매입채무': 0, '미지급금': 0, '차입금': 0}
     st.session_state.equity = {'자본금': 0, '이익잉여금': 0, '자본잉여금': 0}
+
+# 더미 데이터 직접 정의
+dummy_data = [
+    {
+        "날짜": "2024-01-01",
+        "설명": "자산 증가",
+        "입금": 1000000,
+        "출금": 0,
+        "유형": "자산",
+        "카테고리": "현금",
+        "메모": "초기 자본"
+    },
+    {
+        "날짜": "2024-01-05",
+        "설명": "부채 증가",
+        "입금": 0,
+        "출금": 500000,
+        "유형": "부채",
+        "카테고리": "차입금",
+        "메모": "단기 차입"
+    },
+    {
+        "날짜": "2024-01-10",
+        "설명": "자본금 증가",
+        "입금": 300000,
+        "출금": 0,
+        "유형": "자본",
+        "카테고리": "자본금",
+        "메모": "출자"
+    }
+]
+
+# 더미 데이터 불러오기
+def load_dummy_data():
+    if 'dummy_loaded' not in st.session_state:
+        for entry in dummy_data:
+            add_transaction(
+                pd.to_datetime(entry["날짜"]),
+                entry["설명"],
+                entry["입금"],
+                entry["출금"],
+                entry["유형"],
+                entry["카테고리"],
+                entry["메모"]
+            )
+        st.session_state.dummy_loaded = True
+        st.success("더미 데이터를 성공적으로 불러왔습니다.")
 
 # 거래 추가 함수
 def add_transaction(date, description, amount_in, amount_out, transaction_type, category, memo):
@@ -92,20 +119,6 @@ def balance_sheet():
 
     st.write(f"### 순자산")
     st.write(f"**순자산**: {net_assets:,.0f} 원 💸")
-
-:
-    if year in financials_by_year:
-        data = financials_by_year[year]
-        for category, value in data.items():
-            if category in st.session_state.assets:
-                st.session_state.assets[category] = value
-            elif category in st.session_state.liabilities:
-                st.session_state.liabilities[category] = value
-            elif category in st.session_state.equity:
-                st.session_state.equity[category] = value
-        st.success(f"{year}년 기준 재무제표 데이터를 불러왔습니다!")
-    else:
-        st.error(f"{year}년 데이터가 존재하지 않습니다.")
 
 # 메인 UI 함수
 def main():
