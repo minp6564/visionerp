@@ -62,7 +62,7 @@ def get_category_options(transaction_type):
 def load_dummy_data_from_csv():
     if 'dummy_loaded' not in st.session_state:
         try:
-            df = pd.read_csv("dummy_data.csv")  # 🔁 CSV 파일명은 필요 시 변경
+            df = pd.read_csv("dummy_data.py")  # 🔁 CSV 파일명은 필요 시 변경
             for _, row in df.iterrows():
                 add_transaction(
                     pd.to_datetime(row["날짜"]),
