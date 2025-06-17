@@ -73,29 +73,39 @@ def balance_sheet():
     st.write(f"### 순자산")
     st.write(f"**순자산**: {net_assets:,.0f} 원 💸")
 
-# 이미지에서 수집한 재무 데이터 입력 함수
-def load_sample_financials():
-    sample_data = {
-        '유동자산': 1869176, '비유동자산': 1192399,
-        '유동부채': 2151142, '비유동부채': 860221,
-        '자본금': 12419, '이익잉여금': -3759187
-    }
-    for category, value in sample_data.items():
-        if category in st.session_state.assets:
-            st.session_state.assets[category] = value
-        elif category in st.session_state.liabilities:
-            st.session_state.liabilities[category] = value
-        elif category in st.session_state.equity:
-            st.session_state.equity[category] = value
-    st.success("2019년 기준 샘플 재무제표 데이터를 불러왔습니다!")
+# 연도별 재무 데이터
+financials_by_year = {
+    "2019": {'유동자산': 1869176, '비유동자산': 1192399, '유동부채': 2151142, '비유동부채': 860221, '자본금': 12419, '이익잉여금': -3759187},
+    "2018": {'유동자산': 1354558, '비유동자산': 448089, '유동부채': 1475843, '비유동부채': 365463, '자본금': 11357, '이익잉여금': -3035947},
+    "2017": {'유동자산': 680666, '비유동자산': 391949, '유동부채': 986318, '비유동부채': 347364, '자본금': 10691, '이익잉여금': -1862102},
+    "2016": {'유동자산': 683453, '비유동자산': 516864, '유동부채': 618527, '비유동부채': 83702, '자본금': 9916, '이익잉여금': -1208589},
+    "2015": {'유동자산': 867654, '비유동자산': 207585, '유동부채': 554456, '비유동부채': 88159, '자본금': 9186, '이익잉여금': -646793},
+    "2014": {'유동자산': 256468, '비유동자산': 86372, '유동부채': 276830, '비유동부채': 42306, '자본금': 5826, '이익잉여금': -160823},
+}
+
+# 재무 데이터 불러오기 함수
+def load_financials(year):
+    if year in financials_by_year:
+        data = financials_by_year[year]
+        for category, value in data.items():
+            if category in st.session_state.assets:
+                st.session_state.assets[category] = value
+            elif category in st.session_state.liabilities:
+                st.session_state.liabilities[category] = value
+            elif category in st.session_state.equity:
+                st.session_state.equity[category] = value
+        st.success(f"{year}년 기준 재무제표 데이터를 불러왔습니다!")
+    else:
+        st.error(f"{year}년 데이터가 존재하지 않습니다.")
 
 # 메인 UI 함수
 def main():
     st.markdown('<div class="title">회계 시스템</div>', unsafe_allow_html=True)
     st.markdown('<div class="sub-title">거래 내역을 추가하고 재무상태표를 확인하세요!</div>', unsafe_allow_html=True)
 
-    if st.button("2019년 샘플 재무제표 불러오기"):
-        load_sample_financials()
+    year = st.selectbox("불러올 연도 선택", list(financials_by_year.keys()))
+    if st.button("재무제표 불러오기"):
+        load_financials(year)
 
     with st.expander("거래 입력하기"):
         st.markdown('<div class="section-header">거래 입력</div>', unsafe_allow_html=True)
