@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+from data.dummy_data import inventory_logs
 
 # 스타일 설정
 st.markdown("""
@@ -58,25 +59,21 @@ def get_category_options(transaction_type):
     else:
         return []
 
-# 더미 데이터 불러오기 (dummy_data.py에서 inventory_logs 불러오기)
+# dummy_data.py의 inventory_logs를 이용해 거래 데이터 불러오기
 def load_dummy_data_from_py():
     if 'dummy_loaded' not in st.session_state:
-        try:
-            from data.dummy_data import inventory_logs
-            for _, row in inventory_logs.iterrows():
-                add_transaction(
-                    pd.to_datetime(row["날짜"]),
-                    row.get("공급명", row.get("품명", "거래 없음")),
-                    float(row.get("입고수량", 0)),
-                    float(row.get("출고수량", 0)),
-                    "자산",
-                    "재고자산",
-                    row.get("비고", "")
-                )
-            st.session_state.dummy_loaded = True
-            st.success("더미 데이터를 성공적으로 불러왔습니다.")
-        except Exception as e:
-            st.error(f"더미 데이터 로드 중 오류 발생: {e}")
+        for _, row in inventory_logs.iterrows():
+            add_transaction(
+                pd.to_datetime(row['날짜']),
+                row.get('공급명', row.get('품명', '기타')),
+                row.get('입고수량', 0),
+                row.get('출고수량', 0),
+                '자산',
+                '재고자산',
+                row.get('비고', '')
+            )
+        st.session_state.dummy_loaded = True
+        st.success("dummy_data.py로부터 데이터를 성공적으로 불러왔습니다.")
 
 # 재무상태표 출력 함수
 def balance_sheet():
