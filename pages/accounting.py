@@ -32,31 +32,22 @@ if 'transactions' not in st.session_state:
         '기타포괄손익누계액': 0, '자기주식': 0
     }
 
-# 거래 추가 함수
-def add_transaction(date, description, amount_in, amount_out, transaction_type, category, memo):
-    transaction = {
-        "날짜": date, "설명": description, "입금": amount_in, "출금": amount_out,
-        "유형": transaction_type, "카테고리": category, "메모": memo
-    }
-    st.session_state.transactions.append(transaction)
+# 수동 입력 함수
+def manual_entry():
+    st.markdown('<div class="section-header">항목별 값 수동 입력</div>', unsafe_allow_html=True)
 
-    if category in st.session_state.assets:
-        st.session_state.assets[category] += amount_in
-    elif category in st.session_state.liabilities:
-        st.session_state.liabilities[category] += amount_out
-    elif category in st.session_state.equity:
-        st.session_state.equity[category] += amount_in
+    with st.form("manual_input_form"):
+        for category, group in zip(
+            ['자산', '부채', '자본'],
+            [st.session_state.assets, st.session_state.liabilities, st.session_state.equity]
+        ):
+            st.subheader(category)
+            for name in group:
+                group[name] = st.number_input(f"{name}", value=group[name], key=f"{category}_{name}")
 
-# 거래 유형에 따른 카테고리 매핑
-def get_category_options(transaction_type):
-    if transaction_type == "자산":
-        return list(st.session_state.assets.keys())
-    elif transaction_type == "부채":
-        return list(st.session_state.liabilities.keys())
-    elif transaction_type == "자본":
-        return list(st.session_state.equity.keys())
-    else:
-        return []
+        submitted = st.form_submit_button("입력 완료 ✅")
+        if submitted:
+            st.success("입력한 값이 반영되었습니다!")
 
 # 재무상태표 출력 함수
 def balance_sheet():
@@ -87,7 +78,9 @@ def balance_sheet():
 # 메인 UI 함수
 def main():
     st.markdown('<div class="title">회계 시스템</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sub-title">재무상태표를 확인하세요!</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sub-title">직접 값을 입력하고 재무상태표를 확인하세요!</div>', unsafe_allow_html=True)
+
+    manual_entry()
 
     if st.button("재무상태표 조회 📊"):
         balance_sheet()
