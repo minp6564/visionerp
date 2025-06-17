@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-from data.dummy_data import inventory_logs
 
 # 스타일 설정
 st.markdown("""
@@ -33,17 +32,51 @@ if 'transactions' not in st.session_state:
         '기타포괄손익누계액': 0, '자기주식': 0
     }
 
-# dummy_data.py의 inventory_logs를 이용해 거래 데이터 불러오기
+# 거래 추가 함수
+def add_transaction(date, description, amount_in, amount_out, transaction_type, category, memo):
+    transaction = {
+        "날짜": date, "설명": description, "입금": amount_in, "출금": amount_out,
+        "유형": transaction_type, "카테고리": category, "메모": memo
+    }
+    st.session_state.transactions.append(transaction)
 
-def load_dummy_data_from_py():
-    if 'dummy_loaded' not in st.session_state:
-        for _, row in inventory_logs.iterrows():
-            if row['구분'] == '입고':
-                st.session_state.assets['재고자산'] += row['수량'] * row['입고단가']
-            elif row['구분'] == '출고':
-                st.session_state.assets['재고자산'] -= row['수량'] * row['출고단가']
-        st.session_state.dummy_loaded = True
-        st.success("dummy_data.py로부터 데이터를 성공적으로 불러왔습니다.")
+    if category in st.session_state.assets:
+        st.session_state.assets[category] += amount_in
+    elif category in st.session_state.liabilities:
+        st.session_state.liabilities[category] += amount_out
+    elif category in st.session_state.equity:
+        st.session_state.equity[category] += amount_in
+
+# 거래 유형에 따른 카테고리 매핑
+def get_category_options(transaction_type):
+    if transaction_type == "자산":
+        return list(st.session_state.assets.keys())
+    elif transaction_type == "부채":
+        return list(st.session_state.liabilities.keys())
+    elif transaction_type == "자본":
+        return list(st.session_state.equity.keys())
+    else:
+        return []
+
+# 더미 데이터 불러오기 (예: 외부 파일에서 처리할 수 있도록 수정 권장)
+def load_dummy_data():
+    dummy_entries = [
+        {"날짜": "2025-01-01", "설명": "초기 자산", "입금": 1000000, "출금": 0, "유형": "자산", "카테고리": "현금", "메모": "초기 입금"},
+        {"날짜": "2025-01-02", "설명": "재고 구입", "입금": 0, "출금": 300000, "유형": "자산", "카테고리": "재고자산", "메모": "초기 재고"},
+        {"날짜": "2025-01-03", "설명": "자본금 투입", "입금": 500000, "출금": 0, "유형": "자본", "카테고리": "자본금", "메모": "초기 자본금"}
+    ]
+
+    for entry in dummy_entries:
+        add_transaction(
+            pd.to_datetime(entry["날짜"]),
+            entry["설명"],
+            entry["입금"],
+            entry["출금"],
+            entry["유형"],
+            entry["카테고리"],
+            entry["메모"]
+        )
+    st.success("더미 데이터를 성공적으로 불러왔습니다.")
 
 # 재무상태표 출력 함수
 def balance_sheet():
@@ -74,10 +107,30 @@ def balance_sheet():
 # 메인 UI 함수
 def main():
     st.markdown('<div class="title">회계 시스템</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sub-title">입출고 데이터를 불러와 재무상태표를 확인하세요!</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sub-title">거래 내역을 추가하고 재무상태표를 확인하세요!</div>', unsafe_allow_html=True)
 
-    if st.button("더미 데이터(PY) 불러오기 🐍"):
-        load_dummy_data_from_py()
+    if st.button("거래 더미 데이터 불러오기"):
+        load_dummy_data()
+
+    with st.expander("거래 입력하기"):
+        st.markdown('<div class="section-header">거래 입력</div>', unsafe_allow_html=True)
+        date = st.date_input("날짜 📅", value=datetime.today())
+        description = st.text_area("설명 📝")
+        amount_in = st.number_input("입금액 💰", min_value=0.0, value=0.0)
+        amount_out = st.number_input("출금액 💳", min_value=0.0, value=0.0)
+        transaction_type = st.selectbox("거래 유형", ["자산", "부채", "자본"])
+
+        category_options = get_category_options(transaction_type)
+        category = st.selectbox("카테고리", category_options)
+        memo = st.text_input("비고", "")
+
+        if st.button("거래 추가 ✅"):
+            add_transaction(date, description, amount_in, amount_out, transaction_type, category, memo)
+            st.success("거래가 성공적으로 추가되었습니다!")
+
+    if len(st.session_state.transactions) > 0:
+        st.markdown('<div class="section-header">추가된 거래 목록</div>', unsafe_allow_html=True)
+        st.dataframe(pd.DataFrame(st.session_state.transactions))
 
     if st.button("재무상태표 조회 📊"):
         balance_sheet()
