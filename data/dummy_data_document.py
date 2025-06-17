@@ -1,6 +1,6 @@
 from pathlib import Path
 
-pdf_path = Path("data/ERP_거래명세서_정하람_과장_물류팀.pdf")
+pdf_path = Path("data/거래명세서_정하람_과장_물류팀.pdf")
 
 with open(pdf_path, "rb") as f:
     file_bytes = f.read()
