@@ -47,7 +47,7 @@ def add_transaction(date, description, amount_in, amount_out, transaction_type, 
     elif category in st.session_state.equity:
         st.session_state.equity[category] += amount_in
 
-# 거래 유형에 따른 카테고리
+# 거래 유형에 따른 카테고리 매핑
 def get_category_options(transaction_type):
     if transaction_type == "자산":
         return list(st.session_state.assets.keys())
@@ -58,27 +58,27 @@ def get_category_options(transaction_type):
     else:
         return []
 
-# CSV에서 더미 데이터 불러오기
-def load_dummy_data_from_csv():
+# 더미 데이터 불러오기 (dummy_data.py에서 inventory_logs 불러오기)
+def load_dummy_data_from_py():
     if 'dummy_loaded' not in st.session_state:
         try:
-            df = pd.read_csv("dummy_data.py")  # 🔁 CSV 파일명은 필요 시 변경
-            for _, row in df.iterrows():
+            from data.dummy_data import inventory_logs
+            for _, row in inventory_logs.iterrows():
                 add_transaction(
                     pd.to_datetime(row["날짜"]),
-                    row["설명"],
-                    float(row["입금"]),
-                    float(row["출금"]),
-                    row["유형"],
-                    row["카테고리"],
-                    row.get("메모", "")
+                    row.get("공급명", row.get("품명", "거래 없음")),
+                    float(row.get("입고수량", 0)),
+                    float(row.get("출고수량", 0)),
+                    "자산",
+                    "재고자산",
+                    row.get("비고", "")
                 )
             st.session_state.dummy_loaded = True
             st.success("더미 데이터를 성공적으로 불러왔습니다.")
         except Exception as e:
-            st.error(f"더미 데이터를 불러오는 중 오류 발생: {e}")
+            st.error(f"더미 데이터 로드 중 오류 발생: {e}")
 
-# 재무상태표
+# 재무상태표 출력 함수
 def balance_sheet():
     st.write("### 재무상태표")
     total_assets = sum(st.session_state.assets.values())
@@ -86,31 +86,31 @@ def balance_sheet():
     total_equity = sum(st.session_state.equity.values())
     net_assets = total_assets - total_liabilities
 
-    st.write("### 자산")
+    st.write(f"### 자산")
     for name, value in st.session_state.assets.items():
         st.write(f"{name}: {value:,.0f} 원")
     st.write(f"**총 자산**: {total_assets:,.0f} 원 💰")
 
-    st.write("### 부채")
+    st.write(f"### 부채")
     for name, value in st.session_state.liabilities.items():
         st.write(f"{name}: {value:,.0f} 원")
     st.write(f"**총 부채**: {total_liabilities:,.0f} 원 💳")
 
-    st.write("### 자본")
+    st.write(f"### 자본")
     for name, value in st.session_state.equity.items():
         st.write(f"{name}: {value:,.0f} 원")
     st.write(f"**총 자본**: {total_equity:,.0f} 원 💵")
 
-    st.write("### 순자산")
+    st.write(f"### 순자산")
     st.write(f"**순자산**: {net_assets:,.0f} 원 💸")
 
-# 메인 UI
+# 메인 UI 함수
 def main():
     st.markdown('<div class="title">회계 시스템</div>', unsafe_allow_html=True)
     st.markdown('<div class="sub-title">거래 내역을 추가하고 재무상태표를 확인하세요!</div>', unsafe_allow_html=True)
 
-    if st.button("거래 더미 데이터 불러오기"):
-        load_dummy_data_from_csv()
+    if st.button("더미 데이터(PY) 불러오기 🐍"):
+        load_dummy_data_from_py()
 
     with st.expander("거래 입력하기"):
         st.markdown('<div class="section-header">거래 입력</div>', unsafe_allow_html=True)
@@ -119,6 +119,7 @@ def main():
         amount_in = st.number_input("입금액 💰", min_value=0.0, value=0.0)
         amount_out = st.number_input("출금액 💳", min_value=0.0, value=0.0)
         transaction_type = st.selectbox("거래 유형", ["자산", "부채", "자본"])
+
         category_options = get_category_options(transaction_type)
         category = st.selectbox("카테고리", category_options)
         memo = st.text_input("비고", "")
