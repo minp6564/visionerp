@@ -107,8 +107,7 @@ def main():
     st.markdown('<div class="title">회계 시스템</div>', unsafe_allow_html=True)
     st.markdown('<div class="sub-title">재무상태표를 확인하세요!</div>', unsafe_allow_html=True)
 
-    if st.button("거래 더미 데이터 불러오기"):
-        load_dummy_data()
+    load_dummy_data()
 
     if st.button("재무상태표 조회 📊"):
         balance_sheet()
