@@ -17,9 +17,16 @@ st.markdown("""
 # 세션 초기화
 if 'transactions' not in st.session_state:
     st.session_state.transactions = []
-    st.session_state.assets = {'유동자산': 0, '비유동자산': 0, '현금': 0, '매출채권': 0, '재고자산': 0}
-    st.session_state.liabilities = {'유동부채': 0, '비유동부채': 0, '매입채무': 0, '미지급금': 0, '차입금': 0}
-    st.session_state.equity = {'자본금': 0, '이익잉여금': 0, '자본잉여금': 0}
+    st.session_state.assets = {
+        '유동자산': 0, '비유동자산': 0, '현금': 0, '매출채권': 0, '재고자산': 0,
+        '선급금': 0, '선급비용': 0, '기타유동자산': 0, '건물': 0, '토지': 0, '기계장치': 0
+    }
+    st.session_state.liabilities = {
+        '유동부채': 0, '비유동부채': 0, '매입채무': 0, '미지급금': 0, '단기차입금': 0, '장기차입금': 0
+    }
+    st.session_state.equity = {
+        '자본금': 0, '이익잉여금': 0, '자본잉여금': 0
+    }
 
 # 더미 데이터 직접 정의
 dummy_data = [
@@ -38,7 +45,7 @@ dummy_data = [
         "입금": 0,
         "출금": 500000,
         "유형": "부채",
-        "카테고리": "차입금",
+        "카테고리": "단기차입금",
         "메모": "단기 차입"
     },
     {
@@ -86,9 +93,9 @@ def add_transaction(date, description, amount_in, amount_out, transaction_type, 
 # 거래 유형에 따른 카테고리 매핑
 def get_category_options(transaction_type):
     if transaction_type == "자산":
-        return ["유동자산", "비유동자산", "현금", "매출채권", "재고자산"]
+        return ["유동자산", "비유동자산", "현금", "매출채권", "재고자산", "선급금", "선급비용", "기타유동자산", "건물", "토지", "기계장치"]
     elif transaction_type == "부채":
-        return ["유동부채", "비유동부채", "매입채무", "미지급금", "차입금"]
+        return ["유동부채", "비유동부채", "매입채무", "미지급금", "단기차입금", "장기차입금"]
     elif transaction_type == "자본":
         return ["자본금", "이익잉여금", "자본잉여금"]
     else:
@@ -103,18 +110,18 @@ def balance_sheet():
     net_assets = total_assets - total_liabilities
 
     st.write(f"### 자산")
-    st.write(f"유동자산: {st.session_state.assets['유동자산']:,.0f} 원")
-    st.write(f"비유동자산: {st.session_state.assets['비유동자산']:,.0f} 원")
+    for name, value in st.session_state.assets.items():
+        st.write(f"{name}: {value:,.0f} 원")
     st.write(f"**총 자산**: {total_assets:,.0f} 원 💰")
 
     st.write(f"### 부채")
-    st.write(f"유동부채: {st.session_state.liabilities['유동부채']:,.0f} 원")
-    st.write(f"비유동부채: {st.session_state.liabilities['비유동부채']:,.0f} 원")
+    for name, value in st.session_state.liabilities.items():
+        st.write(f"{name}: {value:,.0f} 원")
     st.write(f"**총 부채**: {total_liabilities:,.0f} 원 💳")
 
     st.write(f"### 자본")
-    st.write(f"자본금: {st.session_state.equity['자본금']:,.0f} 원")
-    st.write(f"이익잉여금: {st.session_state.equity['이익잉여금']:,.0f} 원")
+    for name, value in st.session_state.equity.items():
+        st.write(f"{name}: {value:,.0f} 원")
     st.write(f"**총 자본**: {total_equity:,.0f} 원 💵")
 
     st.write(f"### 순자산")
