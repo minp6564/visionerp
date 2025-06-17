@@ -73,12 +73,30 @@ def balance_sheet():
     st.write(f"### 순자산")
     st.write(f"**순자산**: {net_assets:,.0f} 원 💸")
 
+# 이미지에서 수집한 재무 데이터 입력 함수
+def load_sample_financials():
+    sample_data = {
+        '유동자산': 1869176, '비유동자산': 1192399,
+        '유동부채': 2151142, '비유동부채': 860221,
+        '자본금': 12419, '이익잉여금': -3759187
+    }
+    for category, value in sample_data.items():
+        if category in st.session_state.assets:
+            st.session_state.assets[category] = value
+        elif category in st.session_state.liabilities:
+            st.session_state.liabilities[category] = value
+        elif category in st.session_state.equity:
+            st.session_state.equity[category] = value
+    st.success("2019년 기준 샘플 재무제표 데이터를 불러왔습니다!")
+
 # 메인 UI 함수
 def main():
     st.markdown('<div class="title">회계 시스템</div>', unsafe_allow_html=True)
     st.markdown('<div class="sub-title">거래 내역을 추가하고 재무상태표를 확인하세요!</div>', unsafe_allow_html=True)
 
-    # 거래 입력
+    if st.button("2019년 샘플 재무제표 불러오기"):
+        load_sample_financials()
+
     with st.expander("거래 입력하기"):
         st.markdown('<div class="section-header">거래 입력</div>', unsafe_allow_html=True)
         date = st.date_input("날짜 📅", value=datetime.today())
