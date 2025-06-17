@@ -5,7 +5,7 @@ from datetime import datetime
 # 스타일 설정
 st.markdown("""
     <style>
-        .title { color: #2F4F4F; font-size: 40px; font-weight: bold; text-align: center; margin-top: 20px; }
+        .title { color: #2F4F4F; font-size: 40px; font-weight: bold; text-align: center; margin-top: 20px; }ㅇ
         .sub-title { color: #5F6368; font-size: 30px; text-align: center; }
         .section-header { color: #00796B; font-size: 20px; font-weight: bold; margin-top: 20px; }
         .footer { text-align: center; margin-top: 50px; font-size: 14px; color: #00796B; }
