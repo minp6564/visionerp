@@ -36,6 +36,17 @@ def add_transaction(date, description, amount_in, amount_out, transaction_type, 
     elif category in st.session_state.equity:
         st.session_state.equity[category] += amount_in
 
+# 거래 유형에 따른 카테고리 매핑
+def get_category_options(transaction_type):
+    if transaction_type == "자산":
+        return ["유동자산", "비유동자산"]
+    elif transaction_type == "부채":
+        return ["유동부채", "비유동부채"]
+    elif transaction_type == "자본":
+        return ["자본금", "이익잉여금"]
+    else:
+        return []
+
 # 재무상태표 출력 함수
 def balance_sheet():
     st.write("### 재무상태표")
@@ -76,8 +87,8 @@ def main():
         amount_out = st.number_input("출금액 💳", min_value=0.0, value=0.0)
         transaction_type = st.selectbox("거래 유형", ["자산", "부채", "자본"])
 
-        # 거래 유형과 무관하게 모든 카테고리 선택 가능
-        category = st.selectbox("카테고리", ["유동자산", "비유동자산", "유동부채", "비유동부채", "자본금", "이익잉여금"])
+        category_options = get_category_options(transaction_type)
+        category = st.selectbox("카테고리", category_options)
         memo = st.text_input("비고", "")
 
         if st.button("거래 추가 ✅"):
